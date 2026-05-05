@@ -23,11 +23,6 @@ export default defineConfig({
       redirect: '/admin',
     },
     {
-      name: 'Trang chủ',
-      path: '/home',
-      component: './Home',
-    },
-    {
       name: 'Quản trị viên',
       path: '/admin',
       component: './Admin',
