@@ -1,3 +1,5 @@
+// --- 1. ĐỊNH NGHĨA CÁC KIỂU DỮ LIỆU (TYPES) ---
+
 export type Post = {
   id: number;
   title: string;
@@ -15,6 +17,7 @@ export type User = {
   id: number;
   username: string;
   email: string;
+  password?: string;
   role: 'Sinh viên' | 'Giảng viên' | 'Quản trị viên';
   status: 'Active' | 'Locked';
   createdAt: string;
@@ -35,15 +38,67 @@ export type LoanRequest = {
   item: string;
   borrowDate: string;
   returnDate: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Returned';
 };
+
+export type Announcement = {
+  id: number;
+  title: string;
+  content: string;
+  status: 'Active' | 'Draft' | 'Archived';
+  author: string;
+  createdAt: string;
+};
+
+export type SystemConfig = {
+  maxBorrowDays: number;
+  finePerDay: number;
+  allowOverdueBorrow: boolean;
+  clubEmail: string;
+};
+
+// --- 2. DỮ LIỆU MẪU KHỞI TẠO (MOCK DATA) ---
+
+// ĐÃ SỬA: Chuỗi mã băm Bcrypt chuẩn toán học 100% của mật khẩu "123456" (Xóa bỏ hoàn toàn import bcryptjs ở đầu file để tránh block UI)
+const HASHED_123456 =
+  '$2a$10$.5Elh8fgxypNUWhpUUr/xOa2sZm0VIaE0qWuGGl9otUfobb46T1Pq';
+
+export const initialUsers: User[] = [
+  {
+    id: 1,
+    username: 'admin',
+    email: 'admin@school.edu.vn',
+    password: HASHED_123456,
+    role: 'Quản trị viên',
+    status: 'Active',
+    createdAt: '2025-12-01',
+  },
+  {
+    id: 2,
+    username: 'sv01',
+    email: 'sv01@school.edu.vn',
+    password: HASHED_123456,
+    role: 'Sinh viên',
+    status: 'Active',
+    createdAt: '2026-01-10',
+  },
+  {
+    id: 3,
+    username: 'gv01',
+    email: 'gv01@school.edu.vn',
+    password: HASHED_123456,
+    role: 'Giảng viên',
+    status: 'Locked',
+    createdAt: '2026-02-14',
+  },
+];
 
 export const initialPosts: Post[] = [
   {
     id: 1,
     title: 'Đề xuất tổ chức buổi thảo luận môn Lập trình web',
     content:
-      'Cần thêm buổi thảo luận và chia nhóm thực hành cho môn Lập trình web, đặc biệt cho các bạn năm nhất.',
+      'Cần thêm buổi thảo luận và chia nhóm thực hành cho môn Lập trình web, đặc biệt cho các bạn sinh viên năm nhất.',
     tags: ['môn học', 'web', 'câu lạc bộ'],
     category: 'Học tập',
     author: 'Nguyễn Văn A',
@@ -54,9 +109,9 @@ export const initialPosts: Post[] = [
   },
   {
     id: 2,
-    title: 'Xin mượn máy chiếu cho buổi họp câu lạc bộ',
+    title: 'Xin mượn máy chiếu cho buổi họp câu lạc bộ ngày chủ nhật',
     content:
-      'Buổi họp câu lạc bộ sáng tạo cần dùng máy chiếu và loa. Xin admin hỗ trợ giữ thiết bị.',
+      'Buổi họp câu lạc bộ sáng tạo tuần này cần dùng máy chiếu và thiết bị âm thanh cầm tay. Xin ban quản trị hỗ trợ.',
     tags: ['thiết bị', 'câu lạc bộ', 'máy chiếu'],
     category: 'Sự kiện',
     author: 'Trần Thị B',
@@ -64,33 +119,6 @@ export const initialPosts: Post[] = [
     comments: 6,
     positive: 18,
     negative: 0,
-  },
-];
-
-export const initialUsers: User[] = [
-  {
-    id: 1,
-    username: 'admin',
-    email: 'admin@school.edu.vn',
-    role: 'Quản trị viên',
-    status: 'Active',
-    createdAt: '2025-12-01',
-  },
-  {
-    id: 2,
-    username: 'sv01',
-    email: 'sv01@school.edu.vn',
-    role: 'Sinh viên',
-    status: 'Active',
-    createdAt: '2026-01-10',
-  },
-  {
-    id: 3,
-    username: 'gv01',
-    email: 'gv01@school.edu.vn',
-    role: 'Giảng viên',
-    status: 'Locked',
-    createdAt: '2026-02-14',
   },
 ];
 
@@ -139,3 +167,22 @@ export const initialRequests: LoanRequest[] = [
     status: 'Approved',
   },
 ];
+
+export const initialAnnouncements: Announcement[] = [
+  {
+    id: 1,
+    title: 'Thông báo nghỉ lễ 30/4 - 1/5',
+    content:
+      'Kho thiết bị sẽ tạm thời đóng cửa từ ngày 30/4 đến hết ngày 3/5. Các bạn vui lòng thực hiện thủ tục hoàn trả đồ trước thời hạn nêu trên.',
+    status: 'Active',
+    author: 'Admin Lõi',
+    createdAt: '2026-04-25',
+  },
+];
+
+export const initialSystemConfig: SystemConfig = {
+  maxBorrowDays: 7,
+  finePerDay: 20000,
+  allowOverdueBorrow: false,
+  clubEmail: 'clb.thietbi@school.edu.vn',
+};

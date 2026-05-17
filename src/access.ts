@@ -1,10 +1,9 @@
-export default (initialState: API.UserInfo) => {
-  // 在这里按照初始化数据定义项目中的权限，统一管理
-  // 参考文档 https://umijs.org/docs/max/access
-  const canSeeAdmin = !!(
-    initialState && initialState.name !== 'dontHaveAccess'
-  );
+// ĐÃ SỬA: Đọc đúng chuẩn dữ liệu từ initialState cấp phát thay vì can thiệp đọc trộm localStorage
+export default function access(initialState: { currentUser: any } | undefined) {
+  const { currentUser } = initialState || {};
+
   return {
-    canSeeAdmin,
+    // Nếu vai trò của tài khoản khớp hoàn toàn với Quản trị viên -> Cho phép xem các menu Admin
+    canAdmin: currentUser?.role === 'Quản trị viên',
   };
-};
+}
