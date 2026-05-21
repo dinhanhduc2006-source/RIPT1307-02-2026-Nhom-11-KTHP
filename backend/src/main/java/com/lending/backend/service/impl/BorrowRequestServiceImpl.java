@@ -81,6 +81,8 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
                 .collect(Collectors.toList());
     }
 
+    private final AuditLogRepository auditLogRepository;
+
     @Override
     @Transactional
     public BorrowRequestResponse updateRequestStatus(Long requestId, BorrowRequestStatus status, String adminNote, Long adminId) {
@@ -90,9 +92,10 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        // Logic for stock update when approved/returned
-        if (status == BorrowRequestStatus.approved && borrowRequest.getStatus() == BorrowRequestStatus.pending) {
-            // Check stock and decrement
+        BorrowRequestStatus oldStatus = borrowRequest.getStatus();
+
+        // 1. Logic for Check-out (Pick up)
+        if (status == BorrowRequestStatus.borrowed && oldStatus == BorrowRequestStatus.approved) {
             for (BorrowRequestItem item : borrowRequest.getItems()) {
                 Equipment equipment = item.getEquipment();
                 if (equipment.getAvailableQuantity() < item.getQuantity()) {
@@ -101,21 +104,45 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
                 equipment.setAvailableQuantity(equipment.getAvailableQuantity() - item.getQuantity());
                 equipmentRepository.save(equipment);
             }
-            borrowRequest.setApprovedBy(admin);
-            borrowRequest.setApprovedAt(LocalDateTime.now());
-        } else if (status == BorrowRequestStatus.returned && borrowRequest.getStatus() == BorrowRequestStatus.approved) {
-            // Increment stock
+            borrowRequest.setActualBorrowDate(LocalDateTime.now());
+            logAudit(admin, "CHECK_OUT", "borrow_requests", requestId, "Equipment picked up by student");
+        } 
+        // 2. Logic for Check-in (Return)
+        else if (status == BorrowRequestStatus.returned && oldStatus == BorrowRequestStatus.borrowed) {
             for (BorrowRequestItem item : borrowRequest.getItems()) {
                 Equipment equipment = item.getEquipment();
                 equipment.setAvailableQuantity(equipment.getAvailableQuantity() + item.getQuantity());
                 equipmentRepository.save(equipment);
             }
+            borrowRequest.setActualReturnDate(java.time.LocalDate.now());
+            logAudit(admin, "CHECK_IN", "borrow_requests", requestId, "Equipment returned by student");
+        }
+        // 3. Logic for Approval
+        else if (status == BorrowRequestStatus.approved && oldStatus == BorrowRequestStatus.pending) {
+            borrowRequest.setApprovedBy(admin);
+            borrowRequest.setApprovedAt(LocalDateTime.now());
+            logAudit(admin, "APPROVE_REQUEST", "borrow_requests", requestId, "Request approved");
+        }
+        // 4. Logic for Rejection
+        else if (status == BorrowRequestStatus.rejected && oldStatus == BorrowRequestStatus.pending) {
+            logAudit(admin, "REJECT_REQUEST", "borrow_requests", requestId, "Request rejected: " + adminNote);
         }
 
         borrowRequest.setStatus(status);
         borrowRequest.setAdminNote(adminNote);
         
         return borrowMapper.toBorrowRequestResponse(borrowRequestRepository.save(borrowRequest));
+    }
+
+    private void logAudit(User user, String action, String table, Long recordId, String desc) {
+        AuditLog log = AuditLog.builder()
+                .user(user)
+                .action(action)
+                .tableName(table)
+                .recordId(recordId)
+                .description(desc)
+                .build();
+        auditLogRepository.save(log);
     }
 
     @Override
