@@ -1,38 +1,23 @@
-/node_modules
-/.env.local
-/.umirc.local.ts
-/config/config.local.ts
-/frontend/src/.umi
-/frontend/src/.umi-production
-/frontend/src/.umi-test
-/.umi
-/.umi-production
-/.umi-test
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/target/
+target/
+
+# Local env files
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
 /dist
+/build
+/out
 /.mfsu
 .swc
 .turbopack
-
-### JetBrains (IntelliJ IDEA) ###
-.idea/
-*.iml
-*.iws
-*.ipr
-out/
-
-### Maven ###
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
-
-### Java ###
 *.class
 *.log
 *.jar
@@ -42,7 +27,27 @@ buildNumber.properties
 *.tar.gz
 *.rar
 
-### OS generated files ###
+# Umi/Next/React specific
+/.umi/
+/.umi-production/
+/.umi-test/
+/frontend/src/.umi/
+/frontend/src/.umi-production/
+/frontend/src/.umi-test/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -50,3 +55,6 @@ buildNumber.properties
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Project Specific
+REQUIREMENTS.md
