@@ -1,6 +1,8 @@
 package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
+import com.lending.backend.dto.AuthResponse;
+import com.lending.backend.dto.LoginRequest;
 import com.lending.backend.dto.RegisterRequest;
 import com.lending.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -17,10 +19,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-import com.lending.backend.dto.AuthResponse;
-import com.lending.backend.dto.LoginRequest;
-import com.lending.backend.dto.RegisterRequest;
-...
     @PostMapping("/register")
     public ResponseResult<String> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
