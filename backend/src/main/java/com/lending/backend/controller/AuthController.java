@@ -17,9 +17,18 @@ public class AuthController {
 
     private final AuthService authService;
 
+import com.lending.backend.dto.AuthResponse;
+import com.lending.backend.dto.LoginRequest;
+import com.lending.backend.dto.RegisterRequest;
+...
     @PostMapping("/register")
     public ResponseResult<String> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
         return ResponseResult.success("Đăng ký thành công. Vui lòng kiểm tra email (nếu có)");
+    }
+
+    @PostMapping("/login")
+    public ResponseResult<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseResult.success(authService.login(request));
     }
 }
