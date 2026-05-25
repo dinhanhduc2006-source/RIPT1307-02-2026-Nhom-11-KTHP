@@ -1,0 +1,5 @@
+com\clb\borrow\entity\enums\NotificationType.class
+com\clb\borrow\entity\enums\EquipmentStatus.class
+com\clb\borrow\entity\enums\RequestStatus.class
+com\clb\borrow\entity\enums\Role.class
+com\clb\borrow\entity\User.class
