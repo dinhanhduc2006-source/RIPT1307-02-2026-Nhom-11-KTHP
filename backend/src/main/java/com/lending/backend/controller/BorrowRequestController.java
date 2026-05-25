@@ -4,9 +4,12 @@ import com.lending.backend.common.ResponseResult;
 import com.lending.backend.dto.BorrowCreateRequest;
 import com.lending.backend.dto.BorrowRequestResponse;
 import com.lending.backend.enums.BorrowRequestStatus;
+import com.lending.backend.entity.User;
 import com.lending.backend.service.BorrowRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,17 +23,18 @@ public class BorrowRequestController {
 
     @PostMapping
     public ResponseResult<BorrowRequestResponse> createRequest(
-            @RequestHeader("X-User-Id") Long userId,
+            @AuthenticationPrincipal User user,
             @Valid @RequestBody BorrowCreateRequest request) {
-        return ResponseResult.success(borrowRequestService.createRequest(userId, request));
+        return ResponseResult.success(borrowRequestService.createRequest(user.getId(), request));
     }
 
     @GetMapping("/my-requests")
-    public ResponseResult<List<BorrowRequestResponse>> getMyRequests(@RequestHeader("X-User-Id") Long userId) {
-        return ResponseResult.success(borrowRequestService.getRequestsByUser(userId));
+    public ResponseResult<List<BorrowRequestResponse>> getMyRequests(@AuthenticationPrincipal User user) {
+        return ResponseResult.success(borrowRequestService.getRequestsByUser(user.getId()));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<List<BorrowRequestResponse>> getAllRequests() {
         return ResponseResult.success(borrowRequestService.getAllRequests());
     }
@@ -41,11 +45,12 @@ public class BorrowRequestController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<BorrowRequestResponse> updateStatus(
             @PathVariable Long id,
-            @RequestHeader("X-User-Id") Long adminId,
+            @AuthenticationPrincipal User admin,
             @RequestParam BorrowRequestStatus status,
             @RequestParam(required = false) String adminNote) {
-        return ResponseResult.success(borrowRequestService.updateRequestStatus(id, status, adminNote, adminId));
+        return ResponseResult.success(borrowRequestService.updateRequestStatus(id, status, adminNote, admin.getId()));
     }
 }
