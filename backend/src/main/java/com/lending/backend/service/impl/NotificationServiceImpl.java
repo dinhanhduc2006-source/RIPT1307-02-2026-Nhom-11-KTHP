@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -45,5 +46,18 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         notificationRepository.save(notification);
+    }
+
+    @Override
+    public List<Notification> getNotificationsByUser(Long userId) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    @Override
+    public void markAsRead(Long notificationId) {
+        notificationRepository.findById(notificationId).ifPresent(notification -> {
+            notification.setIsRead(true);
+            notificationRepository.save(notification);
+        });
     }
 }

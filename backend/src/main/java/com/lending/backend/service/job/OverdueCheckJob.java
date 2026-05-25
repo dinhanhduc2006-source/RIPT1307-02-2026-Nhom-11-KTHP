@@ -22,23 +22,23 @@ public class OverdueCheckJob {
     private final BorrowRequestRepository borrowRequestRepository;
     private final NotificationService notificationService;
 
-    // Runs every day at 1:00 AM
     @Scheduled(cron = "0 0 1 * * ?")
     @Transactional
     public void checkOverdueRequests() {
         log.info("Starting overdue requests check job...");
         LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
         
-        // Find all requests that are currently 'borrowed' and whose return date is past today
         List<BorrowRequest> borrowedRequests = borrowRequestRepository.findByStatus(BorrowRequestStatus.borrowed);
         
-        int count = 0;
+        int overdueCount = 0;
+        int warningCount = 0;
         for (BorrowRequest request : borrowedRequests) {
+            // Check for overdue
             if (request.getReturnDate().isBefore(today)) {
                 request.setStatus(BorrowRequestStatus.overdue);
                 borrowRequestRepository.save(request);
                 
-                // Notify user
                 notificationService.createNotification(
                     request.getUser(), 
                     request, 
@@ -46,10 +46,21 @@ public class OverdueCheckJob {
                     "Yêu cầu mượn đồ #" + request.getId() + " của bạn đã quá hạn trả (" + request.getReturnDate() + "). Vui lòng hoàn trả ngay.", 
                     NotificationType.overdue_warning
                 );
-                count++;
+                overdueCount++;
+            } 
+            // Check for due tomorrow (Warning)
+            else if (request.getReturnDate().equals(tomorrow)) {
+                notificationService.createNotification(
+                    request.getUser(),
+                    request,
+                    "Nhắc nhở: Sắp đến hạn trả thiết bị",
+                    "Yêu cầu mượn đồ #" + request.getId() + " của bạn sẽ hết hạn vào ngày mai (" + request.getReturnDate() + "). Vui lòng sắp xếp thời gian hoàn trả.",
+                    NotificationType.system
+                );
+                warningCount++;
             }
         }
         
-        log.info("Overdue check job finished. Updated {} requests to overdue status.", count);
+        log.info("Job finished. Updated {} overdue, sent {} warnings.", overdueCount, warningCount);
     }
 }
