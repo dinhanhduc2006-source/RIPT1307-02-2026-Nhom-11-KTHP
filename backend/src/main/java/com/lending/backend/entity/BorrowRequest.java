@@ -45,7 +45,7 @@ public class BorrowRequest {
     private LocalDateTime actualBorrowDate;
 
     @Column(name = "actual_return_date")
-    private LocalDate actualReturnDate;
+    private LocalDateTime actualReturnDate;
 
     @Column(columnDefinition = "TEXT")
     private String note;

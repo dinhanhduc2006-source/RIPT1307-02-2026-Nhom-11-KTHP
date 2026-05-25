@@ -115,7 +115,7 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
                 equipment.setAvailableQuantity(equipment.getAvailableQuantity() + item.getQuantity());
                 equipmentRepository.save(equipment);
             }
-            borrowRequest.setActualReturnDate(LocalDate.now());
+            borrowRequest.setActualReturnDate(LocalDateTime.now());
             logAudit(admin, "CHECK_IN", "borrow_requests", requestId, "Equipment returned by student");
             notificationService.createNotification(requester, borrowRequest, "Đã trả thiết bị", 
                 "Hệ thống đã xác nhận bạn hoàn trả thiết bị cho yêu cầu #" + requestId, NotificationType.return_confirmed);
