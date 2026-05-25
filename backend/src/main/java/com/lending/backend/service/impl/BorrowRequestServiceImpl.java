@@ -55,6 +55,10 @@ public class BorrowRequestServiceImpl implements BorrowRequestService {
             Equipment equipment = equipmentRepository.findById(itemRequest.getEquipmentId())
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
             
+            if (equipment.getStatus() != com.lending.backend.enums.EquipmentStatus.available) {
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK); // Or a more specific error like EQUIPMENT_NOT_AVAILABLE
+            }
+            
             return BorrowRequestItem.builder()
                     .request(borrowRequest)
                     .equipment(equipment)
