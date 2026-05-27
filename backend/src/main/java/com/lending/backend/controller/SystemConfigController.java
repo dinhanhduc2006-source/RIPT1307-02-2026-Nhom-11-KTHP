@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/config")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('Admin')")
+@PreAuthorize("hasRole('ADMIN')")
 public class SystemConfigController {
 
     private final SystemConfigService systemConfigService;

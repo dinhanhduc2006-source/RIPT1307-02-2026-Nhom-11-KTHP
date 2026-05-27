@@ -22,13 +22,13 @@ public class PenaltyController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<List<Penalty>> getAll() {
         return ResponseResult.success(penaltyService.getAll());
     }
 
     @PatchMapping("/{id}/pay")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<Penalty> pay(@PathVariable Long id) {
         return ResponseResult.success(penaltyService.payPenalty(id));
     }

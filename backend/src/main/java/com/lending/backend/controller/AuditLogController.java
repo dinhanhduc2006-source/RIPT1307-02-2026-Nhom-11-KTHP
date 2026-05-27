@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('Admin')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
     private final AuditLogRepository auditLogRepository;

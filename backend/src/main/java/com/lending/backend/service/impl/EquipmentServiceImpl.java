@@ -11,6 +11,7 @@ import com.lending.backend.repository.EquipmentRepository;
 import com.lending.backend.repository.MaintenanceTicketRepository;
 import com.lending.backend.repository.UserRepository;
 import com.lending.backend.service.AuditLogService;
+import com.lending.backend.service.EmailService;
 import com.lending.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     private final MaintenanceTicketRepository maintenanceTicketRepository;
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     @Override
     public Equipment createEquipment(Equipment equipment) {
@@ -78,6 +80,11 @@ public class EquipmentServiceImpl implements EquipmentService {
                     .build();
             maintenanceTicketRepository.save(ticket);
             auditLogService.log(reporter, "Trigger Maintenance", "Automatic maintenance ticket created for " + equipment.getName());
+            
+            // Alert Admin
+            String adminEmail = "admin_clb_thietbi@gmail.com"; // Should ideally come from SystemConfig
+            emailService.sendSimpleMessage(adminEmail, "EQUIPMENT BREAKDOWN", 
+                "Equipment '" + equipment.getName() + "' has been reported as broken. Maintenance ticket #" + ticket.getId() + " created.");
         }
 
         return equipmentRepository.save(equipment);

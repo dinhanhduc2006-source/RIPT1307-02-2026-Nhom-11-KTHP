@@ -27,26 +27,26 @@ public class EquipmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<Equipment> create(@RequestBody Equipment equipment) {
         return ResponseResult.success(equipmentService.createEquipment(equipment));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<Equipment> update(@PathVariable Long id, @RequestBody Equipment equipment) {
         return ResponseResult.success(equipmentService.updateEquipment(id, equipment));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseResult<String> delete(@PathVariable Long id) {
         equipmentService.deleteEquipment(id);
         return ResponseResult.success("Deleted successfully");
     }
 
     @PostMapping("/{id}/maintenance")
-    @PreAuthorize("hasAnyRole('Admin', 'Faculty')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
     public ResponseResult<Equipment> setMaintenance(
             @PathVariable Long id, 
             @RequestParam Long reporterId, 
