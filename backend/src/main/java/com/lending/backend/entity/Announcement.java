@@ -1,43 +1,38 @@
 package com.lending.backend.entity;
 
-import com.lending.backend.enums.UserRole;
-import com.lending.backend.enums.UserStatus;
+import com.lending.backend.enums.AnnouncementStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "announcements")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Announcement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String username;
-
-    @Column(nullable = false, unique = true, length = 150)
-    private String email;
-
     @Column(nullable = false, length = 255)
-    private String password;
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role;
+    private AnnouncementStatus status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserStatus status;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
