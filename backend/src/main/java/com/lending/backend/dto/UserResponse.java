@@ -1,6 +1,7 @@
 package com.lending.backend.dto;
 
 import com.lending.backend.enums.UserRole;
+import com.lending.backend.enums.UserStatus;
 import lombok.*;
 
 @Data
@@ -9,10 +10,8 @@ import lombok.*;
 @Builder
 public class UserResponse {
     private Long id;
-    private String fullName;
+    private String username;
     private String email;
     private UserRole role;
-    private String studentId;
-    private String phone;
-    private boolean isActive;
+    private UserStatus status;
 }
