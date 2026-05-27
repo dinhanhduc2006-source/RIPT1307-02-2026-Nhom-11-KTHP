@@ -1,14 +1,13 @@
 package com.lending.backend.service;
 
-import com.lending.backend.dto.EquipmentRequest;
-import com.lending.backend.dto.EquipmentResponse;
-
+import com.lending.backend.entity.Equipment;
 import java.util.List;
 
 public interface EquipmentService {
-    List<EquipmentResponse> getAllEquipments();
-    EquipmentResponse getEquipmentById(Long id);
-    EquipmentResponse createEquipment(EquipmentRequest request);
-    EquipmentResponse updateEquipment(Long id, EquipmentRequest request);
+    Equipment createEquipment(Equipment equipment);
+    Equipment updateEquipment(Long id, Equipment equipment);
     void deleteEquipment(Long id);
+    Equipment getById(Long id);
+    List<Equipment> getAll();
+    Equipment setMaintenance(Long id, Long reporterId, String issue);
 }

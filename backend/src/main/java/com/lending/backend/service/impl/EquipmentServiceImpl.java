@@ -1,91 +1,92 @@
 package com.lending.backend.service.impl;
 
-import com.lending.backend.dto.EquipmentRequest;
-import com.lending.backend.dto.EquipmentResponse;
 import com.lending.backend.entity.Equipment;
-import com.lending.backend.entity.EquipmentCategory;
+import com.lending.backend.entity.MaintenanceTicket;
+import com.lending.backend.entity.User;
+import com.lending.backend.enums.EquipmentStatus;
+import com.lending.backend.enums.MaintenanceStatus;
 import com.lending.backend.exception.AppException;
 import com.lending.backend.exception.ErrorCode;
-import com.lending.backend.mapper.EquipmentMapper;
-import com.lending.backend.repository.EquipmentCategoryRepository;
 import com.lending.backend.repository.EquipmentRepository;
+import com.lending.backend.repository.MaintenanceTicketRepository;
+import com.lending.backend.repository.UserRepository;
+import com.lending.backend.service.AuditLogService;
+import com.lending.backend.service.EmailService;
 import com.lending.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
-    private final EquipmentCategoryRepository categoryRepository;
-    private final EquipmentMapper equipmentMapper;
+    private final MaintenanceTicketRepository maintenanceTicketRepository;
+    private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     @Override
-    public List<EquipmentResponse> getAllEquipments() {
-        return equipmentRepository.findAll().stream()
-                .map(equipmentMapper::toEquipmentResponse)
-                .collect(Collectors.toList());
+    public Equipment createEquipment(Equipment equipment) {
+        return equipmentRepository.save(equipment);
     }
 
     @Override
-    public EquipmentResponse getEquipmentById(Long id) {
-        Equipment equipment = equipmentRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        return equipmentMapper.toEquipmentResponse(equipment);
+    public Equipment updateEquipment(Long id, Equipment details) {
+        Equipment equipment = getById(id);
+        equipment.setName(details.getName());
+        equipment.setCategory(details.getCategory());
+        equipment.setTotal(details.getTotal());
+        equipment.setAvailable(details.getAvailable());
+        equipment.setStatus(details.getStatus());
+        return equipmentRepository.save(equipment);
     }
 
     @Override
-    @Transactional
-    public EquipmentResponse createEquipment(EquipmentRequest request) {
-        EquipmentCategory category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        Equipment equipment = Equipment.builder()
-                .category(category)
-                .name(request.getName())
-                .code(request.getCode())
-                .description(request.getDescription())
-                .totalQuantity(request.getTotalQuantity())
-                .availableQuantity(request.getTotalQuantity()) // New equipment, all available
-                .imageUrl(request.getImageUrl())
-                .location(request.getLocation())
-                .build();
-
-        return equipmentMapper.toEquipmentResponse(equipmentRepository.save(equipment));
-    }
-
-    @Override
-    @Transactional
-    public EquipmentResponse updateEquipment(Long id, EquipmentRequest request) {
-        Equipment equipment = equipmentRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        if (!equipment.getCategory().getId().equals(request.getCategoryId())) {
-            EquipmentCategory category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-            equipment.setCategory(category);
-        }
-
-        // Adjust available quantity if total quantity changes
-        int diff = request.getTotalQuantity() - equipment.getTotalQuantity();
-        equipment.setAvailableQuantity(equipment.getAvailableQuantity() + diff);
-        
-        equipmentMapper.updateEntity(equipment, request);
-
-        return equipmentMapper.toEquipmentResponse(equipmentRepository.save(equipment));
-    }
-
-    @Override
-    @Transactional
     public void deleteEquipment(Long id) {
-        if (!equipmentRepository.existsById(id)) {
-            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
-        }
         equipmentRepository.deleteById(id);
+    }
+
+    @Override
+    public Equipment getById(Long id) {
+        return equipmentRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+    }
+
+    @Override
+    public List<Equipment> getAll() {
+        return equipmentRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Equipment setMaintenance(Long id, Long reporterId, String issue) {
+        Equipment equipment = getById(id);
+        User reporter = userRepository.findById(reporterId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        // 4.3 Maintenance Trigger
+        equipment.setStatus(EquipmentStatus.Maintenance);
+        
+        if (!maintenanceTicketRepository.existsByEquipmentAndStatusNot(equipment, MaintenanceStatus.Completed)) {
+            MaintenanceTicket ticket = MaintenanceTicket.builder()
+                    .equipment(equipment)
+                    .issue(issue)
+                    .status(MaintenanceStatus.AwaitingApproval)
+                    .date(LocalDate.now())
+                    .reporter(reporter)
+                    .build();
+            maintenanceTicketRepository.save(ticket);
+            auditLogService.log(reporter, "Trigger Maintenance", "Automatic maintenance ticket created for " + equipment.getName());
+            
+            // Alert Admin
+            String adminEmail = "admin_clb_thietbi@gmail.com"; // Should ideally come from SystemConfig
+            emailService.sendSimpleMessage(adminEmail, "EQUIPMENT BREAKDOWN", 
+                "Equipment '" + equipment.getName() + "' has been reported as broken. Maintenance ticket #" + ticket.getId() + " created.");
+        }
+
+        return equipmentRepository.save(equipment);
     }
 }

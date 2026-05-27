@@ -1,11 +1,10 @@
 package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
-import com.lending.backend.dto.EquipmentRequest;
-import com.lending.backend.dto.EquipmentResponse;
+import com.lending.backend.entity.Equipment;
 import com.lending.backend.service.EquipmentService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,28 +17,40 @@ public class EquipmentController {
     private final EquipmentService equipmentService;
 
     @GetMapping
-    public ResponseResult<List<EquipmentResponse>> getAllEquipments() {
-        return ResponseResult.success(equipmentService.getAllEquipments());
+    public ResponseResult<List<Equipment>> getAll() {
+        return ResponseResult.success(equipmentService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseResult<EquipmentResponse> getEquipmentById(@PathVariable Long id) {
-        return ResponseResult.success(equipmentService.getEquipmentById(id));
+    public ResponseResult<Equipment> getById(@PathVariable Long id) {
+        return ResponseResult.success(equipmentService.getById(id));
     }
 
     @PostMapping
-    public ResponseResult<EquipmentResponse> createEquipment(@Valid @RequestBody EquipmentRequest request) {
-        return ResponseResult.success(equipmentService.createEquipment(request));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseResult<Equipment> create(@RequestBody Equipment equipment) {
+        return ResponseResult.success(equipmentService.createEquipment(equipment));
     }
 
     @PutMapping("/{id}")
-    public ResponseResult<EquipmentResponse> updateEquipment(@PathVariable Long id, @Valid @RequestBody EquipmentRequest request) {
-        return ResponseResult.success(equipmentService.updateEquipment(id, request));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseResult<Equipment> update(@PathVariable Long id, @RequestBody Equipment equipment) {
+        return ResponseResult.success(equipmentService.updateEquipment(id, equipment));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseResult<Void> deleteEquipment(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseResult<String> delete(@PathVariable Long id) {
         equipmentService.deleteEquipment(id);
-        return ResponseResult.success();
+        return ResponseResult.success("Deleted successfully");
+    }
+
+    @PostMapping("/{id}/maintenance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
+    public ResponseResult<Equipment> setMaintenance(
+            @PathVariable Long id, 
+            @RequestParam Long reporterId, 
+            @RequestParam String issue) {
+        return ResponseResult.success(equipmentService.setMaintenance(id, reporterId, issue));
     }
 }

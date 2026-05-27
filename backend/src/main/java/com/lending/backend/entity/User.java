@@ -1,11 +1,13 @@
 package com.lending.backend.entity;
 
 import com.lending.backend.enums.UserRole;
+import com.lending.backend.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,40 +22,26 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = false, length = 100)
-    private String fullName;
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
-    @Column(nullable = false, length = 150, unique = true)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(nullable = false, length = 255)
+    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role = UserRole.student;
+    private UserRole role;
 
-    @Column(name = "student_id", length = 20, unique = true)
-    private String studentId;
-
-    @Column(length = 15)
-    private String phone;
-
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
-
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "last_login_ip", length = 45)
-    private String lastLoginIp;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

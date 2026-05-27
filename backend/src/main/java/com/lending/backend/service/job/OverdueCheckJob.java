@@ -1,15 +1,13 @@
 package com.lending.backend.service.job;
 
-import com.lending.backend.entity.BorrowRequest;
-import com.lending.backend.enums.BorrowRequestStatus;
-import com.lending.backend.enums.NotificationType;
-import com.lending.backend.repository.BorrowRequestRepository;
-import com.lending.backend.service.NotificationService;
+import com.lending.backend.entity.LoanRequest;
+import com.lending.backend.enums.LoanRequestStatus;
+import com.lending.backend.repository.LoanRequestRepository;
+import com.lending.backend.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,37 +17,41 @@ import java.util.List;
 @Slf4j
 public class OverdueCheckJob {
 
-    private final BorrowRequestRepository borrowRequestRepository;
-    private final NotificationService notificationService;
+    private final LoanRequestRepository loanRequestRepository;
+    private final EmailService emailService;
 
     // Runs every day at 1:00 AM
     @Scheduled(cron = "0 0 1 * * ?")
-    @Transactional
-    public void checkOverdueRequests() {
-        log.info("Starting overdue requests check job...");
-        LocalDate today = LocalDate.now();
+    public void checkOverdueAndSendReminders() {
+        log.info("Starting automated overdue check and reminder job...");
+
+        // 1. Send reminders for items due tomorrow
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        List<LoanRequest> dueTomorrow = loanRequestRepository.findByStatusAndReturnDateBefore(
+                LoanRequestStatus.Approved, tomorrow.plusDays(1)); // Simple check for exact date
         
-        // Find all requests that are currently 'borrowed' and whose return date is past today
-        List<BorrowRequest> borrowedRequests = borrowRequestRepository.findByStatus(BorrowRequestStatus.borrowed);
-        
-        int count = 0;
-        for (BorrowRequest request : borrowedRequests) {
-            if (request.getReturnDate().isBefore(today)) {
-                request.setStatus(BorrowRequestStatus.overdue);
-                borrowRequestRepository.save(request);
-                
-                // Notify user
-                notificationService.createNotification(
-                    request.getUser(), 
-                    request, 
-                    "Cảnh báo: Thiết bị quá hạn trả", 
-                    "Yêu cầu mượn đồ #" + request.getId() + " của bạn đã quá hạn trả (" + request.getReturnDate() + "). Vui lòng hoàn trả ngay.", 
-                    NotificationType.overdue_warning
+        for (LoanRequest request : dueTomorrow) {
+            if (request.getReturnDate().equals(tomorrow)) {
+                emailService.sendOverdueReminder(
+                        request.getRequester().getEmail(),
+                        request.getEquipment().getName(),
+                        request.getReturnDate()
                 );
-                count++;
             }
         }
+
+        // 2. Alert for items that became overdue today
+        List<LoanRequest> overdueToday = loanRequestRepository.findByStatusAndReturnDateBefore(
+                LoanRequestStatus.Approved, LocalDate.now());
         
-        log.info("Overdue check job finished. Updated {} requests to overdue status.", count);
+        for (LoanRequest request : overdueToday) {
+            emailService.sendSimpleMessage(
+                    request.getRequester().getEmail(),
+                    "URGENT: Equipment Overdue",
+                    "Your loan for '" + request.getEquipment().getName() + "' is now overdue. Fines are being applied daily."
+            );
+        }
+
+        log.info("Automated job completed.");
     }
 }
