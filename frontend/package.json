@@ -4,7 +4,7 @@
   "scripts": {
     "build": "max build",
     "dev": "max dev",
-    "format": "prettier --cache --write ..",
+    "format": "prettier --cache --write .",
     "postinstall": "max setup",
     "prepare": "husky",
     "setup": "max setup",
