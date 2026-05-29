@@ -8,16 +8,20 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ResponseResult<Object>> handlingRuntimeException(RuntimeException exception) {
+    ResponseEntity<ResponseResult<Object>> handlingRuntimeException(Exception exception) {
+        exception.printStackTrace(); // FORCE PRINT STACK TRACE TO STDERR
         log.error("Exception: ", exception);
-        return ResponseEntity.badRequest().body(
-                ResponseResult.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(), ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+        ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
+        return ResponseEntity.status(errorCode.getStatusCode()).body(
+                ResponseResult.error(errorCode.getCode(), errorCode.getMessage() + ": " + exception.getMessage())
         );
     }
 
@@ -26,6 +30,22 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = exception.getErrorCode();
         return ResponseEntity.status(errorCode.getStatusCode()).body(
                 ResponseResult.error(errorCode.getCode(), errorCode.getMessage())
+        );
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    ResponseEntity<ResponseResult<Object>> handlingDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        log.warn("Data Integrity Violation: {}", exception.getMessage());
+        return ResponseEntity.badRequest().body(
+                ResponseResult.error(1002, "Data constraint violation. Possibly a duplicate entry or missing required field.")
+        );
+    }
+
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    ResponseEntity<ResponseResult<Object>> handlingHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+        log.warn("HttpMessageNotReadable: {}", exception.getMessage());
+        return ResponseEntity.badRequest().body(
+                ResponseResult.error(1003, "Invalid request format: " + exception.getMostSpecificCause().getMessage())
         );
     }
 

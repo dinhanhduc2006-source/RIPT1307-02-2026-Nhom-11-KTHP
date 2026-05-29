@@ -18,7 +18,7 @@ export type User = {
   username: string;
   email: string;
   password?: string;
-  role: 'Sinh viên' | 'Giảng viên' | 'Quản trị viên';
+  role: 'Student' | 'Faculty' | 'Admin';
   status: 'Active' | 'Locked';
   createdAt: string;
 };
@@ -29,13 +29,13 @@ export type Equipment = {
   category: string;
   available: number;
   total: number;
-  status: 'Sẵn sàng' | 'Hết hàng' | 'Bảo trì';
+  status: 'Available' | 'Out of Stock' | 'Maintenance';
 };
 
 export type LoanRequest = {
   id: number;
-  requester: string;
-  item: string;
+  requester: User;
+  equipment: Equipment;
   borrowDate: string;
   returnDate: string;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Returned';
@@ -69,7 +69,7 @@ export const initialUsers: User[] = [
     username: 'admin',
     email: 'admin@school.edu.vn',
     password: HASHED_123456,
-    role: 'Quản trị viên',
+    role: 'Admin',
     status: 'Active',
     createdAt: '2025-12-01',
   },
@@ -78,7 +78,7 @@ export const initialUsers: User[] = [
     username: 'sv01',
     email: 'sv01@school.edu.vn',
     password: HASHED_123456,
-    role: 'Sinh viên',
+    role: 'Student',
     status: 'Active',
     createdAt: '2026-01-10',
   },
@@ -87,7 +87,7 @@ export const initialUsers: User[] = [
     username: 'gv01',
     email: 'gv01@school.edu.vn',
     password: HASHED_123456,
-    role: 'Giảng viên',
+    role: 'Faculty',
     status: 'Locked',
     createdAt: '2026-02-14',
   },
@@ -129,7 +129,7 @@ export const initialEquipment: Equipment[] = [
     category: 'Trình chiếu',
     available: 2,
     total: 3,
-    status: 'Sẵn sàng',
+    status: 'Available',
   },
   {
     id: 2,
@@ -137,7 +137,7 @@ export const initialEquipment: Equipment[] = [
     category: 'Âm thanh',
     available: 1,
     total: 2,
-    status: 'Sẵn sàng',
+    status: 'Available',
   },
   {
     id: 3,
@@ -145,23 +145,23 @@ export const initialEquipment: Equipment[] = [
     category: 'Tin học',
     available: 0,
     total: 1,
-    status: 'Hết hàng',
+    status: 'Out of Stock',
   },
 ];
 
 export const initialRequests: LoanRequest[] = [
   {
     id: 1,
-    requester: 'Nguyễn Văn A',
-    item: 'Máy chiếu Sony',
+    requester: initialUsers[1],
+    equipment: initialEquipment[0],
     borrowDate: '2026-05-06',
     returnDate: '2026-05-07',
     status: 'Pending',
   },
   {
     id: 2,
-    requester: 'Trần Thị B',
-    item: 'Micro không dây',
+    requester: initialUsers[2],
+    equipment: initialEquipment[1],
     borrowDate: '2026-05-05',
     returnDate: '2026-05-06',
     status: 'Approved',

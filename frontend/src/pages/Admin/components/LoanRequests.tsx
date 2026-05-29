@@ -41,8 +41,8 @@ const LoanRequests: React.FC<Props> = ({
   const filteredRequests = requests.filter((req) => {
     // 1. Lọc theo từ khóa (Tên người mượn hoặc Tên thiết bị)
     const matchSearch =
-      req.requester.toLowerCase().includes(searchText.toLowerCase()) ||
-      req.item.toLowerCase().includes(searchText.toLowerCase());
+      req.requester.username.toLowerCase().includes(searchText.toLowerCase()) ||
+      req.equipment.name.toLowerCase().includes(searchText.toLowerCase());
 
     // 2. Lọc theo trạng thái
     const matchStatus = statusFilter === 'All' || req.status === statusFilter;
@@ -90,9 +90,12 @@ const LoanRequests: React.FC<Props> = ({
           {
             title: 'Người yêu cầu',
             dataIndex: 'requester',
-            render: (v) => <Text strong>{v}</Text>,
+            render: (v) => <Text strong>{v.username}</Text>,
           },
-          { title: 'Thiết bị', dataIndex: 'item' },
+          {
+            title: 'Thiết bị',
+            dataIndex: ['equipment', 'name'],
+          },
           { title: 'Ngày mượn', dataIndex: 'borrowDate', width: 110 },
           { title: 'Hạn trả', dataIndex: 'returnDate', width: 110 },
           {

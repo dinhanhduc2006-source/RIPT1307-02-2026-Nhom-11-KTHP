@@ -1,16 +1,26 @@
 import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
-import { Tag } from 'antd';
+import { Tag, message } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { auditLogApi } from '@/services/api';
 
 const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // ĐÃ SỬA: Đọc động nhật ký thao tác thực tế thay vì dữ liệu tĩnh
-  useEffect(() => {
-    const savedLogs = localStorage.getItem('mock_audit_logs');
-    if (savedLogs) {
-      setLogs(JSON.parse(savedLogs));
+  const fetchLogs = async () => {
+    setLoading(true);
+    try {
+      const res = await auditLogApi.getAll();
+      setLogs(res || []);
+    } catch (error) {
+      message.error('Không thể tải nhật ký hệ thống');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchLogs();
   }, []);
 
   return (
@@ -20,13 +30,19 @@ const AuditLogs: React.FC = () => {
     >
       <ProCard bordered>
         <ProTable
+          loading={loading}
           dataSource={logs}
           rowKey="id"
           search={false}
-          options={{ reload: true, setting: true }}
+          options={{ reload: fetchLogs, setting: true }}
           pagination={{ pageSize: 10 }}
           columns={[
-            { title: 'Thời gian thao tác', dataIndex: 'time', width: 190 },
+            { 
+              title: 'Thời gian thao tác', 
+              dataIndex: 'createdAt', 
+              width: 190,
+              render: (v: any) => v ? new Date(v).toLocaleString('vi-VN') : '-'
+            },
             {
               title: 'Người thực hiện',
               dataIndex: 'user',
@@ -34,12 +50,12 @@ const AuditLogs: React.FC = () => {
               render: (_, record: any) => (
                 <>
                   <span style={{ fontWeight: 'bold', marginRight: 8 }}>
-                    {record.user}
+                    {record.user?.username || 'N/A'}
                   </span>
                   <Tag
-                    color={record.role === 'Quản trị viên' ? 'gold' : 'blue'}
+                    color={record.user?.role === 'Admin' ? 'gold' : 'blue'}
                   >
-                    {record.role}
+                    {record.user?.role || 'User'}
                   </Tag>
                 </>
               ),

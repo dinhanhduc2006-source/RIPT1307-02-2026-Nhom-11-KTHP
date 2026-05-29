@@ -1,45 +1,47 @@
-import { defineConfig } from '@umijs/max';
+﻿import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
+  // Proxy API requests to Spring Boot backend (port 8080)
+  proxy: {
+    '/api/v1': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
+
   antd: {},
   access: {},
   model: {},
   initialState: {},
   request: {},
 
-  // =================================================================
-  // CẤU HÌNH VIỆT HÓA TOÀN CỤC (Sửa triệt để các nút tiếng Trung/Anh)
-  // =================================================================
   locale: {
-    default: 'vi-VN', // Đặt ngôn ngữ mặc định hệ thống là Tiếng Việt
-    antd: true, // Bật tự động dịch bộ thư viện Ant Design sang tiếng Việt
-    baseNavigator: false, // Bỏ qua thiết lập ngôn ngữ gốc của trình duyệt người dùng
+    default: 'vi-VN',
+    antd: true,
+    baseNavigator: false,
   },
 
   layout: {
     title: 'CLB Thiết Bị',
-    locale: false, // Giữ false để ẩn nút chuyển vùng ngôn ngữ trên thanh Header
+    locale: false,
+  },
+
+  // Performance Optimizations
+  hash: true,
+  fastRefresh: true,
+  codeSplitting: {
+    jsStrategy: 'granularChunks',
   },
 
   routes: [
-    // Tuyến đường gốc trung gian: Tự động kiểm tra Vai trò để rẽ luồng điều hướng
     { path: '/', component: './index' },
-
-    // =================================================================
-    // 1. GIAO DIỆN CLIENT ĐỘC LẬP (SINH VIÊN / GIẢNG VIÊN)
-    // =================================================================
     {
       name: 'Trang chủ Client',
       path: '/client-home',
       component: './ClientHome',
-      layout: false, // Ẩn hoàn toàn khung Sidebar Menu bên trái của Admin
+      layout: false,
       wrappers: ['@/wrappers/AuthWrapper'],
     },
-
-    // =================================================================
-    // 2. GIAO DIỆN QUẢN TRỊ (CHỈ DÀNH RIÊNG CHO ADMIN)
-    // =================================================================
-    // --- NHÓM LÕI ---
     {
       name: 'Bảng điều khiển',
       icon: 'DashboardOutlined',
@@ -55,8 +57,6 @@ export default defineConfig({
       component: './Home',
       wrappers: ['@/wrappers/AuthWrapper'],
     },
-
-    // --- NHÓM NGHIỆP VỤ NÂNG CAO ---
     {
       name: 'Quản lý Bảo trì',
       icon: 'ToolOutlined',
@@ -73,8 +73,6 @@ export default defineConfig({
       wrappers: ['@/wrappers/AuthWrapper'],
       access: 'canAdmin',
     },
-
-    // --- NHÓM CỘNG ĐỒNG ---
     {
       name: 'Cộng đồng thảo luận',
       icon: 'TeamOutlined',
@@ -90,8 +88,6 @@ export default defineConfig({
       wrappers: ['@/wrappers/AuthWrapper'],
       access: 'canAdmin',
     },
-
-    // --- NHÓM BÁO CÁO & HỆ THỐNG ---
     {
       name: 'Báo cáo & Thống kê',
       icon: 'PieChartOutlined',
@@ -116,8 +112,6 @@ export default defineConfig({
       wrappers: ['@/wrappers/AuthWrapper'],
       access: 'canAdmin',
     },
-
-    // --- NHÓM CÁ NHÂN ---
     {
       name: 'Hướng dẫn & FAQ',
       icon: 'QuestionCircleOutlined',
@@ -132,11 +126,8 @@ export default defineConfig({
       component: './Account',
       wrappers: ['@/wrappers/AuthWrapper'],
     },
-
-    // =================================================================
-    // 3. TRANG ĐĂNG NHẬP (LAYOUT ĐỘC LẬP)
-    // =================================================================
     { path: '/login', component: './Login', layout: false },
+    { path: '/signup', component: './SignUp', layout: false },
   ],
   npmClient: 'npm',
 });

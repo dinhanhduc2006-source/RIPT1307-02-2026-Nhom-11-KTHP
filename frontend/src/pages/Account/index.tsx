@@ -1,54 +1,36 @@
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { Button, Descriptions, Form, Input, message, Tag } from 'antd';
-import bcrypt from 'bcryptjs';
 import React from 'react';
-import { User } from '../Admin/data';
+import { getUser, userApi, clearAuth } from '@/services/api';
 
 const AccountPage: React.FC = () => {
   const [form] = Form.useForm();
-  const currentUserStr = localStorage.getItem('currentUser');
-  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+  const currentUser = getUser();
 
   const handleUpdatePassword = async () => {
-    const values = await form.validateFields();
+    try {
+      const values = await form.validateFields();
 
-    // 1. Verify mật khẩu hiện tại
-    const isMatch = await bcrypt.compare(
-      values.currentPassword,
-      currentUser.password,
-    );
-    if (!isMatch) {
-      message.error('Mật khẩu hiện tại không chính xác!');
-      return;
+      if (values.newPassword !== values.confirmPassword) {
+        message.error('Mật khẩu xác nhận không khớp!');
+        return;
+      }
+
+      await userApi.changePassword(
+        currentUser.id,
+        values.currentPassword,
+        values.newPassword,
+      );
+
+      message.success('Cập nhật mật khẩu thành công!');
+      form.resetFields();
+    } catch (error: any) {
+      message.error(error?.message || 'Cập nhật mật khẩu thất bại!');
     }
-
-    // 2. Kiểm tra khớp mật khẩu mới
-    if (values.newPassword !== values.confirmPassword) {
-      message.error('Mật khẩu xác nhận không khớp!');
-      return;
-    }
-
-    // 3. Hash pass mới và lưu thật
-    const salt = await bcrypt.genSalt(10);
-    const newHashed = await bcrypt.hash(values.newPassword, salt);
-
-    const savedUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
-    const updatedUsers = savedUsers.map((u: User) =>
-      u.id === currentUser.id ? { ...u, password: newHashed } : u,
-    );
-
-    localStorage.setItem('mock_users', JSON.stringify(updatedUsers));
-    localStorage.setItem(
-      'currentUser',
-      JSON.stringify({ ...currentUser, password: newHashed }),
-    );
-
-    message.success('Cập nhật mật khẩu thành công!');
-    form.resetFields();
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('currentUser');
+    clearAuth();
     window.location.href = '/login';
   };
 
@@ -78,21 +60,21 @@ const AccountPage: React.FC = () => {
             <Form.Item
               name="currentPassword"
               label="Mật khẩu hiện tại"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
             >
               <Input.Password />
             </Form.Item>
             <Form.Item
               name="newPassword"
               label="Mật khẩu mới"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu mới' }]}
             >
               <Input.Password />
             </Form.Item>
             <Form.Item
               name="confirmPassword"
               label="Xác nhận MK mới"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Vui lòng xác nhận mật khẩu mới' }]}
             >
               <Input.Password />
             </Form.Item>

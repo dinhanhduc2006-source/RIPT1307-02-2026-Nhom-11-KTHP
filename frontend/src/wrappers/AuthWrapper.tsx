@@ -1,14 +1,12 @@
 import { Navigate, Outlet } from '@umijs/max';
+import { isAuthenticated } from '@/services/api';
 
 export default () => {
-  // Kiểm tra xem người dùng đã đăng nhập chưa
-  const userStr = localStorage.getItem('currentUser');
-
-  // Nếu đã đăng nhập, cho phép đi tiếp vào trang (Outlet)
-  if (userStr) {
+  // Check if user is authenticated via JWT token
+  if (isAuthenticated()) {
     return <Outlet />;
   }
 
-  // Nếu chưa đăng nhập, đá văng ra trang Login
+  // Not logged in -> redirect to Login
   return <Navigate to="/login" />;
 };

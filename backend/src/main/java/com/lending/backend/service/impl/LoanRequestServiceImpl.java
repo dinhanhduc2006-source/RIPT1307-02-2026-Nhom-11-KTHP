@@ -31,30 +31,36 @@ public class LoanRequestServiceImpl implements LoanRequestService {
 
     @Override
     @Transactional
-    public LoanRequest createRequest(Long userId, Long equipmentId, String borrowDate, String returnDate) {
+    public LoanRequest createRequest(Long userId, Long equipmentId, LocalDate borrowDate, LocalDate returnDate) {
         User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         Equipment equipment = equipmentRepository.findById(equipmentId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         SystemConfig config = systemConfigRepository.findById(1).orElse(new SystemConfig());
 
-        LocalDate bDate = LocalDate.parse(borrowDate);
-        LocalDate rDate = LocalDate.parse(returnDate);
-
         // 4.4 Borrow Eligibility Verification
         if (!config.getAllowBorrowWhenDebt() && penaltyRepository.existsByUserAndStatus(user, PenaltyStatus.Unpaid)) {
-            throw new AppException(ErrorCode.USER_HAS_DEBT); // Need to add this to ErrorCode
+            throw new AppException(ErrorCode.USER_HAS_DEBT);
         }
         if (loanRequestRepository.existsByRequesterAndStatusAndReturnDateBefore(user, LoanRequestStatus.Approved, LocalDate.now())) {
-            throw new AppException(ErrorCode.USER_HAS_OVERDUE); // Need to add this to ErrorCode
+            throw new AppException(ErrorCode.USER_HAS_OVERDUE);
         }
-        if (rDate.isBefore(bDate)) {
+        if (borrowDate.isBefore(LocalDate.now())) {
             throw new AppException(ErrorCode.INVALID_BORROW_DATE);
+        }
+        if (returnDate.isBefore(borrowDate)) {
+            throw new AppException(ErrorCode.INVALID_BORROW_DATE);
+        }
+
+        // Enforce max borrow days limit
+        long daysRequested = ChronoUnit.DAYS.between(borrowDate, returnDate);
+        if (daysRequested > config.getMaxBorrowDays()) {
+            throw new AppException(ErrorCode.INVALID_BORROW_DATE); // Or a specific "EXCEED_MAX_DAYS" error
         }
 
         LoanRequest request = LoanRequest.builder()
                 .requester(user)
                 .equipment(equipment)
-                .borrowDate(bDate)
-                .returnDate(rDate)
+                .borrowDate(borrowDate)
+                .returnDate(returnDate)
                 .status(LoanRequestStatus.Pending)
                 .build();
 
@@ -66,16 +72,22 @@ public class LoanRequestServiceImpl implements LoanRequestService {
     public LoanRequest approveRequest(Long requestId, Long adminId) {
         LoanRequest request = loanRequestRepository.findById(requestId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         User admin = userRepository.findById(adminId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        Equipment equipment = request.getEquipment();
+        
+        // Use locking to prevent race conditions during status check and availability decrement
+        Equipment equipment = equipmentRepository.findByIdWithLock(request.getEquipment().getId())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
         // 4.1 Loan Request Approval Logic
+        if (equipment.getStatus() == EquipmentStatus.Maintenance) {
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND); 
+        }
         if (equipment.getAvailable() <= 0) {
             throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
         }
 
         request.setStatus(LoanRequestStatus.Approved);
         equipment.setAvailable(equipment.getAvailable() - 1);
-        if (equipment.getAvailable() == 0) {
+        if (equipment.getAvailable() == 0 && equipment.getStatus() == EquipmentStatus.Available) {
             equipment.setStatus(EquipmentStatus.OutOfStock);
         }
 
@@ -99,6 +111,9 @@ public class LoanRequestServiceImpl implements LoanRequestService {
         request.setStatus(LoanRequestStatus.Rejected);
         request.setRejectReason(reason);
         
+        auditLogService.log(admin, "Reject Request", 
+            String.format("Admin: %s, Requester: %s, Reason: %s", admin.getUsername(), request.getRequester().getUsername(), reason));
+
         emailService.sendSimpleMessage(request.getRequester().getEmail(), "Loan Request Rejected", "Your request #" + requestId + " has been rejected. Reason: " + reason);
 
         return loanRequestRepository.save(request);
@@ -109,20 +124,30 @@ public class LoanRequestServiceImpl implements LoanRequestService {
     public LoanRequest returnEquipment(Long requestId, Long adminId) {
         LoanRequest request = loanRequestRepository.findById(requestId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         User admin = userRepository.findById(adminId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        Equipment equipment = request.getEquipment();
+        
+        // Use locking to prevent race conditions during availability increment
+        Equipment equipment = equipmentRepository.findByIdWithLock(request.getEquipment().getId())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        
         SystemConfig config = systemConfigRepository.findById(1).orElse(new SystemConfig());
 
         // 4.2 Equipment Return Logic
         request.setStatus(LoanRequestStatus.Returned);
         request.setReturnedAt(LocalDateTime.now());
 
-        equipment.setAvailable(equipment.getAvailable() + 1);
-        equipment.setStatus(EquipmentStatus.Available);
+        if (equipment.getAvailable() < equipment.getTotal()) {
+            equipment.setAvailable(equipment.getAvailable() + 1);
+        }
+        
+        if (equipment.getStatus() == EquipmentStatus.OutOfStock) {
+            equipment.setStatus(EquipmentStatus.Available);
+        }
+        
         equipmentRepository.save(equipment);
 
         // Overdue Check
         boolean isLate = LocalDate.now().isAfter(request.getReturnDate());
-        String detail = String.format("Equipment returned: %s", equipment.getName());
+        String detail = String.format("Admin: %s, Equipment returned: %s", admin.getUsername(), equipment.getName());
         
         if (isLate) {
             long daysLate = ChronoUnit.DAYS.between(request.getReturnDate(), LocalDate.now());
@@ -147,12 +172,14 @@ public class LoanRequestServiceImpl implements LoanRequestService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LoanRequest> getMyRequests(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        return loanRequestRepository.findByRequester(user);
+        User requester = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        return loanRequestRepository.findByRequester(requester);
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LoanRequest> getAllRequests() {
         return loanRequestRepository.findAll();
     }

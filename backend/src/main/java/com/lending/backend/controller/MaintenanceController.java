@@ -25,9 +25,9 @@ public class MaintenanceController {
 
     @PatchMapping("/{id}/status")
     public ResponseResult<MaintenanceTicket> updateStatus(
-            @PathVariable Long id,
-            @RequestParam MaintenanceStatus status,
-            @RequestParam(required = false) Long cost) {
+            @PathVariable("id") Long id,
+            @RequestParam("status") MaintenanceStatus status,
+            @RequestParam(value = "cost", required = false) Long cost) {
         return ResponseResult.success(maintenanceService.updateStatus(id, status, cost));
     }
 }

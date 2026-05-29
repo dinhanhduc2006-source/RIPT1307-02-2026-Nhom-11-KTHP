@@ -1,46 +1,59 @@
-import { DollarOutlined } from '@ant-design/icons';
+import { DollarOutlined, PlusOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
-import { message, Popconfirm, Space, Tag, Typography } from 'antd';
+import { Button, Form, Input, InputNumber, message, Modal, Popconfirm, Select, Space, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { penaltyApi, userApi } from '@/services/api';
 
 const { Text } = Typography;
 
-const initialPenalties = [
-  {
-    id: 1,
-    student: 'sv01',
-    reason: 'Trả thiết bị quá hạn 3 ngày',
-    amount: 60000,
-    status: 'Chưa nộp',
-    date: '2026-05-15',
-  },
-  {
-    id: 2,
-    student: 'Nguyễn Văn A',
-    reason: 'Làm hỏng cáp kết nối máy chiếu',
-    amount: 150000,
-    status: 'Đã nộp',
-    date: '2026-04-20',
-  },
-];
-
 const PenaltiesPage: React.FC = () => {
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('mock_penalties');
-    return saved ? JSON.parse(saved) : initialPenalties;
-  });
+  const [data, setData] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [penaltyRes, userRes] = await Promise.all([
+        penaltyApi.getAll(),
+        userApi.getAll()
+      ]);
+      setData(penaltyRes || []);
+      setUsers(userRes || []);
+    } catch (error) {
+      message.error('Không thể tải danh sách vi phạm');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('mock_penalties', JSON.stringify(data));
-  }, [data]);
+    fetchData();
+  }, []);
 
-  const handleCollectMoney = (id: number) => {
-    setData(
-      data.map((item) =>
-        item.id === id ? { ...item, status: 'Đã nộp' } : item,
-      ),
-    );
-    message.success('Đã xác nhận thu tiền bồi thường/phạt thành công!');
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      await penaltyApi.create(values);
+      message.success('Đã lập biên bản vi phạm mới');
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchData();
+    } catch (e) {
+      message.error('Lỗi khi lập biên bản');
+    }
+  };
+
+  const handleCollectMoney = async (id: number) => {
+    try {
+      await penaltyApi.pay(id);
+      message.success('Đã xác nhận thu tiền bồi thường/phạt thành công!');
+      fetchData();
+    } catch (error) {
+      message.error('Cập nhật trạng thái thất bại');
+    }
   };
 
   return (
@@ -49,15 +62,24 @@ const PenaltiesPage: React.FC = () => {
       subTitle="Xử lý các trường hợp trả muộn, làm hỏng hoặc mất thiết bị"
     >
       <ProCard bordered>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}
+          style={{ marginBottom: 16 }}
+        >
+          Lập biên bản vi phạm
+        </Button>
         <ProTable
+          loading={loading}
           dataSource={data}
           rowKey="id"
           search={false}
           columns={[
             {
               title: 'Người vi phạm',
-              dataIndex: 'student',
-              render: (t) => <Text strong>{t}</Text>,
+              dataIndex: 'user',
+              render: (_, record: any) => <Text strong>{record.user?.username || 'N/A'}</Text>,
             },
             { title: 'Lý do phạt', dataIndex: 'reason' },
             {
@@ -65,29 +87,33 @@ const PenaltiesPage: React.FC = () => {
               dataIndex: 'amount',
               render: (v) => (
                 <Text type="danger" strong>
-                  {v.toLocaleString()} đ
+                  {v ? v.toLocaleString() : '0'} đ
                 </Text>
               ),
             },
-            { title: 'Ngày lập biên bản', dataIndex: 'date' },
+            { 
+              title: 'Ngày lập biên bản', 
+              dataIndex: 'date',
+              render: (v: any) => v || '-'
+            },
             {
               title: 'Trạng thái',
               dataIndex: 'status',
               render: (s) => (
                 <Tag
                   color={
-                    s === 'Chờ nộp' || s === 'Chưa nộp' ? 'red' : 'success'
+                    s === 'Unpaid' ? 'red' : 'success'
                   }
                 >
-                  {s}
+                  {s === 'Unpaid' ? 'Chưa nộp' : 'Đã nộp'}
                 </Tag>
               ),
             },
             {
               title: 'Hành động',
-              render: (_, record) => (
+              render: (_, record: any) => (
                 <Space>
-                  {record.status !== 'Đã nộp' && (
+                  {record.status === 'Unpaid' && (
                     <Popconfirm
                       title="Xác nhận sinh viên đã nộp đủ tiền?"
                       onConfirm={() => handleCollectMoney(record.id)}
@@ -97,7 +123,7 @@ const PenaltiesPage: React.FC = () => {
                       </a>
                     </Popconfirm>
                   )}
-                  {record.status === 'Đã nộp' && (
+                  {record.status === 'Paid' && (
                     <Text type="secondary">Hoàn tất</Text>
                   )}
                 </Space>
@@ -106,6 +132,56 @@ const PenaltiesPage: React.FC = () => {
           ]}
         />
       </ProCard>
+
+      <Modal
+        title="Lập biên bản vi phạm mới"
+        open={isModalOpen}
+        onOk={handleSave}
+        onCancel={() => setIsModalOpen(false)}
+        destroyOnClose
+        okText="Lập biên bản"
+        cancelText="Hủy"
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="userId"
+            label="Chọn người vi phạm"
+            rules={[{ required: true, message: 'Vui lòng chọn người vi phạm!' }]}
+          >
+            <Select 
+              showSearch 
+              placeholder="Tìm theo username..."
+              optionFilterProp="children"
+            >
+              {users.map((u: any) => (
+                <Select.Option key={u.id} value={u.id}>
+                  {u.username} ({u.email})
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="amount"
+            label="Số tiền phạt (VNĐ)"
+            rules={[{ required: true, message: 'Vui lòng nhập số tiền!' }]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+              min={0}
+              step={1000}
+            />
+          </Form.Item>
+          <Form.Item
+            name="reason"
+            label="Lý do chi tiết"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do!' }]}
+          >
+            <Input.TextArea rows={3} placeholder="Ví dụ: Làm hỏng màn hình máy chiếu, Trả muộn 3 ngày..." />
+          </Form.Item>
+        </Form>
+      </Modal>
     </PageContainer>
   );
 };

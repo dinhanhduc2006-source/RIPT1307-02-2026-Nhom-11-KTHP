@@ -2,7 +2,7 @@ package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
 import com.lending.backend.entity.AuditLog;
-import com.lending.backend.repository.AuditLogRepository;
+import com.lending.backend.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +15,10 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
 
     @GetMapping
     public ResponseResult<List<AuditLog>> getAll() {
-        return ResponseResult.success(auditLogRepository.findAll());
+        return ResponseResult.success(auditLogService.getAll());
     }
 }

@@ -18,18 +18,28 @@ const PostsTable: React.FC<Props> = ({ posts, onDeletePost }) => {
       <ProTable<Post>
         columns={[
           { title: 'Tiêu đề', dataIndex: 'title', ellipsis: true },
-          { title: 'Tác giả', dataIndex: 'author', width: 140 },
+          { 
+            title: 'Tác giả', 
+            dataIndex: 'author', 
+            width: 140,
+            render: (_, record: any) => typeof record.author === 'object' ? record.author?.username : record.author 
+          },
           { title: 'Danh mục', dataIndex: 'category', width: 110 },
           {
             title: 'Tags',
             dataIndex: 'tags',
-            render: (_, record) => (
-              <Space wrap>
-                {record.tags.map((tag) => (
-                  <Tag key={tag}>{tag}</Tag>
-                ))}
-              </Space>
-            ),
+            render: (_, record) => {
+              const tagList = Array.isArray(record.tags) 
+                ? record.tags 
+                : (typeof record.tags === 'string' ? record.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+              return (
+                <Space wrap>
+                  {tagList.map((tag) => (
+                    <Tag key={tag}>{tag}</Tag>
+                  ))}
+                </Space>
+              );
+            },
           },
           { title: 'Ngày đăng', dataIndex: 'createdAt', width: 110 },
           {
@@ -64,7 +74,7 @@ const PostsTable: React.FC<Props> = ({ posts, onDeletePost }) => {
           <>
             <Title level={4}>{selectedPost.title}</Title>
             <Paragraph>
-              <strong>Tác giả:</strong> {selectedPost.author}
+              <strong>Tác giả:</strong> {typeof selectedPost.author === 'object' ? (selectedPost.author as any)?.username : selectedPost.author}
             </Paragraph>
             <Paragraph>
               <strong>Ngày đăng:</strong> {selectedPost.createdAt}

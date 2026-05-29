@@ -2,6 +2,7 @@ package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
 import com.lending.backend.entity.Post;
+import com.lending.backend.entity.User;
 import com.lending.backend.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +22,13 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseResult<Post> create(@RequestBody Post post, @RequestParam Long authorId) {
-        return ResponseResult.success(postService.createPost(post, authorId));
+    public ResponseResult<Post> create(@RequestBody Post post) {
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(postService.createPost(post, currentUser.getId()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseResult<String> delete(@PathVariable Long id) {
+    public ResponseResult<String> delete(@PathVariable("id") Long id) {
         postService.deletePost(id);
         return ResponseResult.success("Post deleted");
     }

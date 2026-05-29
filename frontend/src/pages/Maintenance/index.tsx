@@ -12,63 +12,58 @@ import {
   Tag,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-
-const initialMaintenance = [
-  {
-    id: 1,
-    equipment: 'Máy chiếu Sony',
-    issue: 'Cháy bóng đèn',
-    cost: 1500000,
-    status: 'Đang sửa',
-    date: '2026-05-10',
-    reporter: 'admin',
-  },
-  {
-    id: 2,
-    equipment: 'Micro không dây',
-    issue: 'Mất tín hiệu',
-    cost: 300000,
-    status: 'Đã xong',
-    date: '2026-05-01',
-    reporter: 'gv01',
-  },
-];
+import { maintenanceApi, equipmentApi, getUser } from '@/services/api';
 
 const MaintenancePage: React.FC = () => {
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('mock_maintenance');
-    return saved ? JSON.parse(saved) : initialMaintenance;
-  });
+  const [data, setData] = useState([]);
+  const [equipments, setEquipments] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    localStorage.setItem('mock_maintenance', JSON.stringify(data));
-  }, [data]);
-
-  const handleSave = async () => {
-    const values = await form.validateFields();
-    setData([
-      {
-        id: Date.now(),
-        ...values,
-        date: new Date().toISOString().split('T')[0],
-        reporter: 'admin',
-      },
-      ...data,
-    ]);
-    message.success('Đã tạo phiếu bảo trì mới!');
-    setIsModalOpen(false);
-    form.resetFields();
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [maintRes, eqRes] = await Promise.all([
+        maintenanceApi.getAll(),
+        equipmentApi.getAll()
+      ]);
+      setData(maintRes || []);
+      setEquipments(eqRes || []);
+    } catch (error) {
+      message.error('Không thể tải dữ liệu');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateStatus = (id: number, newStatus: string) => {
-    setData(
-      data.map((item) =>
-        item.id === id ? { ...item, status: newStatus } : item,
-      ),
-    );
-    message.success(`Đã cập nhật tiến độ thành: ${newStatus}`);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      await equipmentApi.setMaintenance(values.equipmentId, values.issue);
+      message.success('Đã tạo phiếu bảo trì thành công');
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchData();
+    } catch (e) {
+      console.error(e);
+      message.error('Không thể tạo phiếu bảo trì');
+    }
+  };
+
+  const updateStatus = async (id: number, newStatus: string, cost?: number) => {
+    try {
+      await maintenanceApi.updateStatus(id, newStatus, cost);
+      message.success(`Đã cập nhật tiến độ thành công`);
+      fetchData();
+    } catch (error) {
+      message.error('Cập nhật thất bại');
+    }
   };
 
   return (
@@ -86,6 +81,7 @@ const MaintenancePage: React.FC = () => {
           Tạo phiếu bảo trì
         </Button>
         <ProTable
+          loading={loading}
           dataSource={data}
           rowKey="id"
           search={false}
@@ -94,45 +90,56 @@ const MaintenancePage: React.FC = () => {
             {
               title: 'Tên thiết bị',
               dataIndex: 'equipment',
-              render: (t) => <strong>{t}</strong>,
+              render: (_, record: any) => <strong>{record.equipment?.name || 'N/A'}</strong>,
             },
             { title: 'Tình trạng lỗi', dataIndex: 'issue' },
             {
               title: 'Chi phí dự kiến (VNĐ)',
               dataIndex: 'cost',
-              render: (v) => v.toLocaleString() + ' đ',
+              render: (v) => v ? v.toLocaleString() + ' đ' : '0 đ',
             },
-            { title: 'Ngày báo hỏng', dataIndex: 'date' },
+            { 
+              title: 'Ngày báo hỏng', 
+              dataIndex: 'date',
+              render: (v: any) => v || '-'
+            },
             {
               title: 'Tiến độ',
               dataIndex: 'status',
-              render: (s) => (
-                <Tag
-                  color={
-                    s === 'Chờ duyệt'
-                      ? 'orange'
-                      : s === 'Đang sửa'
-                      ? 'blue'
-                      : 'green'
-                  }
-                >
-                  {s}
-                </Tag>
-              ),
+              render: (s) => {
+                const statusMap: Record<string, string> = {
+                  'AwaitingApproval': 'Chờ duyệt',
+                  'UnderRepair': 'Đang sửa',
+                  'Completed': 'Đã xong'
+                };
+                return (
+                  <Tag
+                    color={
+                      s === 'AwaitingApproval'
+                        ? 'orange'
+                        : s === 'UnderRepair'
+                        ? 'blue'
+                        : 'green'
+                    }
+                  >
+                    {statusMap[s] || s}
+                  </Tag>
+                );
+              },
             },
             {
               title: 'Cập nhật',
-              render: (_, record) => (
+              render: (_, record: any) => (
                 <Space>
-                  {record.status !== 'Đã xong' && (
-                    <a onClick={() => updateStatus(record.id, 'Đang sửa')}>
+                  {record.status === 'AwaitingApproval' && (
+                    <a onClick={() => updateStatus(record.id, 'UnderRepair')}>
                       Bắt đầu sửa
                     </a>
                   )}
-                  {record.status !== 'Đã xong' && (
+                  {record.status !== 'Completed' && (
                     <a
                       style={{ color: 'green' }}
-                      onClick={() => updateStatus(record.id, 'Đã xong')}
+                      onClick={() => updateStatus(record.id, 'Completed')}
                     >
                       Hoàn thành
                     </a>
@@ -159,11 +166,17 @@ const MaintenancePage: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="equipment"
-            label="Tên thiết bị hỏng"
+            name="equipmentId"
+            label="Chọn thiết bị hỏng"
             rules={[{ required: true }]}
           >
-            <Input placeholder="Nhập tên thiết bị hỏng..." />
+            <Select placeholder="Chọn thiết bị...">
+              {equipments.map((eq: any) => (
+                <Select.Option key={eq.id} value={eq.id}>
+                  {eq.name} (Sẵn có: {eq.available}/{eq.total})
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item
             name="issue"
@@ -171,31 +184,9 @@ const MaintenancePage: React.FC = () => {
             rules={[{ required: true }]}
           >
             <Input.TextArea
-              rows={2}
+              rows={3}
               placeholder="Nhập mô tả tình trạng lỗi..."
             />
-          </Form.Item>
-          <Form.Item
-            name="cost"
-            label="Chi phí dự kiến (VNĐ)"
-            rules={[{ required: true }]}
-          >
-            <InputNumber
-              min={0}
-              step={10000}
-              style={{ width: '100%' }}
-              placeholder="Nhập chi phí dự kiến..."
-            />
-          </Form.Item>
-          <Form.Item
-            name="status"
-            label="Trạng thái ban đầu"
-            initialValue="Chờ duyệt"
-          >
-            <Select>
-              <Select.Option value="Chờ duyệt">Chờ duyệt chi phí</Select.Option>
-              <Select.Option value="Đang sửa">Mang đi sửa ngay</Select.Option>
-            </Select>
           </Form.Item>
         </Form>
       </Modal>

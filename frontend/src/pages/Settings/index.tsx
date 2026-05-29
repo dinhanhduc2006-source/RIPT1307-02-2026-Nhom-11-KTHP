@@ -8,64 +8,57 @@ import {
   InputNumber,
   message,
   Switch,
+  Spin,
 } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { configApi } from '@/services/api';
 
 const SettingsPage: React.FC = () => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-  // Load cấu hình từ LocalStorage khi mở trang
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('mock_settings');
-    if (savedSettings) {
-      form.setFieldsValue(JSON.parse(savedSettings));
-    } else {
-      form.setFieldsValue({
-        maxBorrowDays: 7,
-        lateFeePerDay: 20000,
-        allowBorrowWhenDebt: false,
-        adminEmail: '',
-      });
+  const fetchConfig = async () => {
+    setLoading(true);
+    try {
+      const res = await configApi.getConfig();
+      if (res) {
+        form.setFieldsValue({
+          maxBorrowDays: res.maxBorrowDays,
+          lateFeePerDay: res.finePerDay,
+          allowBorrowWhenDebt: res.allowBorrowWhenDebt,
+          adminEmail: res.adminEmail,
+        });
+      }
+    } catch (error) {
+      message.error('Không thể tải cấu hình hệ thống');
+    } finally {
+      setLoading(false);
     }
-  }, [form]);
-
-  // Hàm ghi log hệ thống
-  const logAction = (action: string, detail: string) => {
-    const logs = JSON.parse(localStorage.getItem('mock_audit_logs') || '[]');
-    const userStr = localStorage.getItem('currentUser');
-    const user = userStr
-      ? JSON.parse(userStr)
-      : { username: 'System', role: 'System' };
-
-    logs.unshift({
-      id: Date.now(),
-      time: new Date().toLocaleString('vi-VN'),
-      user: user.username,
-      role: user.role,
-      action,
-      detail,
-    });
-    localStorage.setItem('mock_audit_logs', JSON.stringify(logs));
   };
+
+  useEffect(() => {
+    fetchConfig();
+  }, [form]);
 
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
+      setLoading(true);
 
-      // Lưu cấu hình vào LocalStorage
-      localStorage.setItem('mock_settings', JSON.stringify(values));
+      const updateData = {
+        maxBorrowDays: values.maxBorrowDays,
+        finePerDay: values.lateFeePerDay,
+        allowBorrowWhenDebt: values.allowBorrowWhenDebt,
+        adminEmail: values.adminEmail,
+      };
 
-      // Ghi log hành động này lại
-      logAction(
-        'Cấu hình hệ thống',
-        `Đã thay đổi tham số: Phạt ${values.lateFeePerDay.toLocaleString()}đ/ngày, Mượn tối đa ${
-          values.maxBorrowDays
-        } ngày.`,
-      );
-
+      await configApi.updateConfig(updateData);
       message.success('Đã lưu tất cả thay đổi cấu hình hệ thống!');
+      fetchConfig();
     } catch (error) {
-      message.error('Vui lòng kiểm tra lại các trường thông tin!');
+      message.error('Lỗi khi lưu cấu hình');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,77 +67,80 @@ const SettingsPage: React.FC = () => {
       title="Cấu hình tham số hệ thống"
       subTitle="Quản lý và tùy chỉnh các quy định mượn trả, tiền phạt và thông tin liên hệ"
     >
-      <ProCard
-        bordered
-        style={{
-          maxWidth: 800,
-          margin: '0 auto',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        }}
-      >
-        <Form form={form} layout="vertical" size="large">
-          <Divider orientation="left" style={{ marginTop: 0 }}>
-            Quy định mượn trả thiết bị
-          </Divider>
+      <Spin spinning={loading}>
+        <ProCard
+          bordered
+          style={{
+            maxWidth: 800,
+            margin: '0 auto',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          }}
+        >
+          <Form form={form} layout="vertical" size="large">
+            <Divider orientation="left" style={{ marginTop: 0 }}>
+              Quy định mượn trả thiết bị
+            </Divider>
 
-          <Form.Item
-            name="maxBorrowDays"
-            label="Số ngày mượn tối đa"
-            rules={[{ required: true, message: 'Không được để trống!' }]}
-          >
-            <InputNumber
-              min={1}
-              max={30}
-              style={{ width: '100%' }}
-              addonAfter="Ngày"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="lateFeePerDay"
-            label="Tiền phạt trả muộn"
-            rules={[{ required: true, message: 'Không được để trống!' }]}
-          >
-            <InputNumber
-              min={0}
-              step={5000}
-              style={{ width: '100%' }}
-              addonAfter="VNĐ / Ngày"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="allowBorrowWhenDebt"
-            label="Cho phép mượn tiếp khi đang nợ đồ hoặc chưa nộp phạt?"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="Cho phép" unCheckedChildren="Chặn lại" />
-          </Form.Item>
-
-          <Divider orientation="left">Thông tin liên hệ & Cảnh báo</Divider>
-
-          <Form.Item
-            name="adminEmail"
-            label="Email nhận thông báo hệ thống"
-            rules={[
-              { type: 'email', message: 'Định dạng email không hợp lệ!' },
-            ]}
-          >
-            <Input placeholder="Nhập email quản trị..." />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 40, marginBottom: 0 }}>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              block
+            <Form.Item
+              name="maxBorrowDays"
+              label="Số ngày mượn tối đa"
+              rules={[{ required: true, message: 'Không được để trống!' }]}
             >
-              Lưu tất cả thay đổi
-            </Button>
-          </Form.Item>
-        </Form>
-      </ProCard>
+              <InputNumber
+                min={1}
+                max={30}
+                style={{ width: '100%' }}
+                addonAfter="Ngày"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="lateFeePerDay"
+              label="Tiền phạt trả muộn"
+              rules={[{ required: true, message: 'Không được để trống!' }]}
+            >
+              <InputNumber
+                min={0}
+                step={5000}
+                style={{ width: '100%' }}
+                addonAfter="VNĐ / Ngày"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="allowBorrowWhenDebt"
+              label="Cho phép mượn tiếp khi đang nợ đồ hoặc chưa nộp phạt?"
+              valuePropName="checked"
+            >
+              <Switch checkedChildren="Cho phép" unCheckedChildren="Chặn lại" />
+            </Form.Item>
+
+            <Divider orientation="left">Thông tin liên hệ & Cảnh báo</Divider>
+
+            <Form.Item
+              name="adminEmail"
+              label="Email nhận thông báo hệ thống"
+              rules={[
+                { type: 'email', message: 'Định dạng email không hợp lệ!' },
+              ]}
+            >
+              <Input placeholder="Nhập email quản trị..." />
+            </Form.Item>
+
+            <Form.Item style={{ marginTop: 40, marginBottom: 0 }}>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSave}
+                block
+                loading={loading}
+              >
+                Lưu tất cả thay đổi
+              </Button>
+            </Form.Item>
+          </Form>
+        </ProCard>
+      </Spin>
     </PageContainer>
   );
 };

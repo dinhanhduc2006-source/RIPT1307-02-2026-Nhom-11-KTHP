@@ -2,6 +2,7 @@ package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
 import com.lending.backend.entity.Announcement;
+import com.lending.backend.entity.User;
 import com.lending.backend.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,13 +30,20 @@ public class AnnouncementController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseResult<Announcement> create(@RequestBody Announcement announcement, @RequestParam Long authorId) {
-        return ResponseResult.success(announcementService.create(announcement, authorId));
+    public ResponseResult<Announcement> create(@RequestBody Announcement announcement) {
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(announcementService.create(announcement, currentUser.getId()));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseResult<Announcement> update(@PathVariable("id") Long id, @RequestBody Announcement announcement) {
+        return ResponseResult.success(announcementService.update(id, announcement));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseResult<String> delete(@PathVariable Long id) {
+    public ResponseResult<String> delete(@PathVariable("id") Long id) {
         announcementService.delete(id);
         return ResponseResult.success("Deleted successfully");
     }

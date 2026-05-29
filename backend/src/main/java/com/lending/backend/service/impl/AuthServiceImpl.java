@@ -1,5 +1,8 @@
 package com.lending.backend.service.impl;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.lending.backend.dto.AuthResponse;
 import com.lending.backend.dto.LoginRequest;
 import com.lending.backend.dto.RegisterRequest;
@@ -14,9 +17,8 @@ import com.lending.backend.repository.UserRepository;
 import com.lending.backend.service.AuthService;
 import com.lending.backend.service.RefreshTokenService;
 import com.lending.backend.util.JwtUtils;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +50,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(request.getIdentifier())
+                .or(() -> userRepository.findByUsername(request.getIdentifier()))
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class MaintenanceTicket {
 
     @Id
@@ -29,8 +30,8 @@ public class MaintenanceTicket {
 
     private Long cost;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Convert(converter = com.lending.backend.enums.MaintenanceStatusConverter.class)
     private MaintenanceStatus status;
 
     @Column(nullable = false)
