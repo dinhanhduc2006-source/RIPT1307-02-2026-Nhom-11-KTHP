@@ -9,6 +9,7 @@ import com.lending.backend.repository.UserRepository;
 import com.lending.backend.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,23 +20,30 @@ public class PostServiceImpl implements PostService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public Post createPost(Post post, Long authorId) {
         User author = userRepository.findById(authorId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         post.setAuthor(author);
+        if (post.getComments() == null) post.setComments(0);
+        if (post.getPositive() == null) post.setPositive(0);
+        if (post.getNegative() == null) post.setNegative(0);
         return postRepository.save(post);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Post> getAll() {
         return postRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Post getById(Long id) {
         return postRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
     }
 
     @Override
+    @Transactional
     public void deletePost(Long id) {
         postRepository.deleteById(id);
     }

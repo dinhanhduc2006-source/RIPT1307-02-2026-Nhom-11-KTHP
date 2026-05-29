@@ -17,51 +17,58 @@ import {
   Typography,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Post } from '../Admin/data';
+import { postApi, getUser } from '@/services/api';
 
 const { Paragraph, Title } = Typography;
 
 const ForumPage: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await postApi.getAll();
+      setPosts(res || []);
+    } catch (error) {
+      message.error('Không thể tải bài viết');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const saved = localStorage.getItem('mock_posts');
-    if (saved) setPosts(JSON.parse(saved));
+    fetchPosts();
   }, []);
 
   const handleCreatePost = async () => {
     try {
       const values = await form.validateFields();
-      const userStr = localStorage.getItem('currentUser');
-      const user = userStr
-        ? JSON.parse(userStr)
-        : { username: 'Sinh viên ẩn danh' };
+      const user = getUser();
+      
+      if (!user) {
+        message.error('Vui lòng đăng nhập để đăng bài');
+        return;
+      }
 
-      const newPost: Post = {
-        id: Date.now(),
+      const postData = {
         title: values.title,
         content: values.content,
         category: values.category,
-        tags: values.tags
-          ? values.tags.split(',').map((t: string) => t.trim())
-          : ['Thảo luận'],
-        author: user.username,
-        positive: 0,
-        comments: 0,
-        createdAt: new Date().toISOString().split('T')[0],
+        tags: values.tags || 'Thảo luận',
       };
 
-      const updatedPosts = [newPost, ...posts];
-      setPosts(updatedPosts);
-      localStorage.setItem('mock_posts', JSON.stringify(updatedPosts));
+      await postApi.create(postData);
 
       message.success('Đã đăng bài viết mới thành công lên bảng tin!');
       setIsModalOpen(false);
       form.resetFields();
+      fetchPosts();
     } catch (e) {
-      console.log(e);
+      console.error(e);
+      message.error('Lỗi khi đăng bài');
     }
   };
 
@@ -79,7 +86,8 @@ const ForumPage: React.FC = () => {
         >
           Tạo bài thảo luận mới
         </Button>
-        <ProList<Post>
+        <ProList<any>
+          loading={loading}
           itemLayout="vertical"
           rowKey="id"
           dataSource={posts}
@@ -90,7 +98,7 @@ const ForumPage: React.FC = () => {
               </Title>
               <Space style={{ margin: '4px 0 12px 0' }}>
                 <Tag color="magenta">{item.category}</Tag>
-                {item.tags.map((t) => (
+                {item.tags?.split(',').map((t: string) => (
                   <Tag key={t}>{t}</Tag>
                 ))}
               </Space>
@@ -108,18 +116,13 @@ const ForumPage: React.FC = () => {
                 <Space>
                   <Avatar icon={<UserOutlined />} size="small" />
                   <span style={{ fontWeight: 'bold', color: '#595959' }}>
-                    {item.author}
+                    {item.author?.username || 'N/A'}
                   </span>
-                  <span>| {item.createdAt}</span>
+                  <span>| {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : '-'}</span>
                 </Space>
                 <Space size="large">
                   <span
                     style={{ cursor: 'pointer', transition: 'color 0.3s' }}
-                    onClick={() =>
-                      message.info(
-                        'Tính năng Thích bài viết đang được nâng cấp!',
-                      )
-                    }
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.color = '#1890ff')
                     }
@@ -131,11 +134,6 @@ const ForumPage: React.FC = () => {
                   </span>
                   <span
                     style={{ cursor: 'pointer', transition: 'color 0.3s' }}
-                    onClick={() =>
-                      message.info(
-                        'Tính năng Bình luận sẽ ra mắt trong phiên bản sau!',
-                      )
-                    }
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.color = '#1890ff')
                     }

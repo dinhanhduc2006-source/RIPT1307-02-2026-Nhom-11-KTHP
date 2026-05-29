@@ -23,6 +23,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     private final EquipmentRepository equipmentRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<MaintenanceTicket> getAll() {
         return maintenanceTicketRepository.findAll();
     }
@@ -33,13 +34,19 @@ public class MaintenanceServiceImpl implements MaintenanceService {
         MaintenanceTicket ticket = maintenanceTicketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         
+        MaintenanceStatus oldStatus = ticket.getStatus();
         ticket.setStatus(status);
         if (cost != null) ticket.setCost(cost);
 
-        if (status == MaintenanceStatus.Completed) {
+        if (status == MaintenanceStatus.Completed && oldStatus != MaintenanceStatus.Completed) {
             Equipment equipment = ticket.getEquipment();
-            equipment.setStatus(EquipmentStatus.Available);
-            equipmentRepository.save(equipment);
+            if (equipment.getAvailable() < equipment.getTotal()) {
+                equipment.setAvailable(equipment.getAvailable() + 1);
+                if (equipment.getAvailable() > 0 && equipment.getStatus() == EquipmentStatus.Maintenance) {
+                    equipment.setStatus(EquipmentStatus.Available);
+                }
+                equipmentRepository.save(equipment);
+            }
         }
 
         return maintenanceTicketRepository.save(ticket);

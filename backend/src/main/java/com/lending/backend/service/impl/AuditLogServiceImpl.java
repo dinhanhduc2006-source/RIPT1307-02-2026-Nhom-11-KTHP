@@ -13,6 +13,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     private final AuditLogRepository auditLogRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void log(User user, String action, String detail) {
         AuditLog auditLog = AuditLog.builder()
                 .user(user)
@@ -20,5 +21,11 @@ public class AuditLogServiceImpl implements AuditLogService {
                 .detail(detail)
                 .build();
         auditLogRepository.save(auditLog);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.List<AuditLog> getAll() {
+        return auditLogRepository.findAll();
     }
 }

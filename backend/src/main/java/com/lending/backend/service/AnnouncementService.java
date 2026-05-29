@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface AnnouncementService {
     Announcement create(Announcement announcement, Long authorId);
+    Announcement update(Long id, Announcement details);
     List<Announcement> getAllActive();
     List<Announcement> getAll();
     void delete(Long id);

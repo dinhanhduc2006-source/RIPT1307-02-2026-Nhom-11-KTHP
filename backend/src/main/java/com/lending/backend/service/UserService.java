@@ -1,16 +1,18 @@
 package com.lending.backend.service;
 
-import com.lending.backend.entity.User;
+import com.lending.backend.dto.UserResponse;
 import com.lending.backend.entity.User;
 import java.util.List;
 
 public interface UserService {
 
-  User register(User user);
+  UserResponse register(User user);
 
   User getById(Long id);
 
-  User updateStatus(Long id, com.lending.backend.enums.UserStatus status);
+  UserResponse updateStatus(Long id, com.lending.backend.enums.UserStatus status);
+
+  void changePassword(Long id, String oldPassword, String newPassword);
 
   List<User> getAll();
 }

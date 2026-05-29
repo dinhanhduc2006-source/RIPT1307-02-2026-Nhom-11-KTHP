@@ -40,8 +40,10 @@ const EquipmentPanel: React.FC<Props> = ({
   const topEquipment = useMemo(() => {
     const counts: Record<string, number> = {};
     requests.forEach((r) => {
-      if (r.status === 'Approved' || r.status === 'Returned')
-        counts[r.item] = (counts[r.item] || 0) + 1;
+      if (r.status === 'Approved' || r.status === 'Returned') {
+        const name = r.equipment.name;
+        counts[name] = (counts[name] || 0) + 1;
+      }
     });
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
@@ -52,14 +54,14 @@ const EquipmentPanel: React.FC<Props> = ({
     if (!selectedEqForBorrowers) return [];
     return requests.filter(
       (req) =>
-        req.item === selectedEqForBorrowers.name && req.status === 'Approved',
+        req.equipment.name === selectedEqForBorrowers.name && req.status === 'Approved',
     );
   }, [requests, selectedEqForBorrowers]);
 
   const openModal = (record?: Equipment) => {
     setEditingEq(record || null);
     form.setFieldsValue(
-      record || { total: 1, available: 1, status: 'Sẵn sàng' },
+      record || { total: 1, available: 1, status: 'Available' },
     );
     setModalVisible(true);
   };
@@ -78,14 +80,14 @@ const EquipmentPanel: React.FC<Props> = ({
       setModalVisible(false);
       form.resetFields();
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 
   // SỬA LỖI 2: Chặn xóa thiết bị nếu đang có người mượn
   const handleDelete = (record: Equipment) => {
     const isBeingBorrowed = requests.some(
-      (req) => req.item === record.name && req.status === 'Approved',
+      (req) => req.equipment.name === record.name && req.status === 'Approved',
     );
     if (isBeingBorrowed) {
       message.error(
@@ -133,14 +135,18 @@ const EquipmentPanel: React.FC<Props> = ({
               render: (_, r) => (
                 <Tag
                   color={
-                    r.status === 'Sẵn sàng'
+                    r.status === 'Available'
                       ? 'success'
-                      : r.status === 'Hết hàng'
+                      : r.status === 'Out of Stock'
                       ? 'error'
                       : 'warning'
                   }
                 >
-                  {r.status}
+                  {r.status === 'Available'
+                    ? 'Sẵn sàng'
+                    : r.status === 'Out of Stock'
+                    ? 'Hết hàng'
+                    : 'Bảo trì'}
                 </Tag>
               ),
             },
@@ -225,9 +231,9 @@ const EquipmentPanel: React.FC<Props> = ({
           </Space>
           <Form.Item name="status" label="Trạng thái">
             <Select>
-              <Select.Option value="Sẵn sàng">Sẵn sàng</Select.Option>
-              <Select.Option value="Hết hàng">Hết hàng</Select.Option>
-              <Select.Option value="Bảo trì">Bảo trì</Select.Option>
+              <Select.Option value="Available">Sẵn sàng</Select.Option>
+              <Select.Option value="Out of Stock">Hết hàng</Select.Option>
+              <Select.Option value="Maintenance">Bảo trì</Select.Option>
             </Select>
           </Form.Item>
         </Form>
@@ -254,7 +260,11 @@ const EquipmentPanel: React.FC<Props> = ({
           rowKey="id"
           pagination={false}
           columns={[
-            { title: 'Người mượn', dataIndex: 'requester' },
+            {
+              title: 'Người mượn',
+              dataIndex: 'requester',
+              render: (requester) => requester.username,
+            },
             { title: 'Ngày mượn', dataIndex: 'borrowDate' },
             {
               title: 'Ngày phải trả',

@@ -2,6 +2,7 @@ package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
 import com.lending.backend.entity.Penalty;
+import com.lending.backend.entity.User;
 import com.lending.backend.service.PenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,8 +18,9 @@ public class PenaltyController {
     private final PenaltyService penaltyService;
 
     @GetMapping("/my")
-    public ResponseResult<List<Penalty>> getMyPenalties(@RequestParam Long userId) {
-        return ResponseResult.success(penaltyService.getMyPenalties(userId));
+    public ResponseResult<List<Penalty>> getMyPenalties() {
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(penaltyService.getMyPenalties(currentUser.getId()));
     }
 
     @GetMapping
@@ -29,7 +31,13 @@ public class PenaltyController {
 
     @PatchMapping("/{id}/pay")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseResult<Penalty> pay(@PathVariable Long id) {
+    public ResponseResult<Penalty> pay(@PathVariable("id") Long id) {
         return ResponseResult.success(penaltyService.payPenalty(id));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseResult<Penalty> create(@RequestBody com.lending.backend.dto.PenaltyCreateRequest request) {
+        return ResponseResult.success(penaltyService.createPenalty(request));
     }
 }

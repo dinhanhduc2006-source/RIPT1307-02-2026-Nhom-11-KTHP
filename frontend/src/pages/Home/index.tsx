@@ -1,4 +1,4 @@
-import {
+﻿import {
   CalendarOutlined,
   HistoryOutlined,
   SendOutlined,
@@ -14,46 +14,76 @@ import {
   Tag,
   Typography,
   message,
+  Select
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import {
-  Equipment,
-  LoanRequest,
-  initialEquipment,
-  initialRequests,
-} from '../Admin/data';
+import { getUser, equipmentApi, loanRequestApi, userApi } from '@/services/api';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
+const mapEquipmentStatus = (status: string) => {
+  switch (status) {
+    case 'Available':
+      return 'Sẵn sàng';
+    case 'Out of Stock':
+      return 'Hết hàng';
+    case 'Maintenance':
+      return 'Bảo trì';
+    default:
+      return status;
+  }
+};
+
 const HomePage: React.FC = () => {
-  const [equipment] = useState<Equipment[]>(() => {
-    const s = localStorage.getItem('mock_equipment');
-    return s ? JSON.parse(s) : initialEquipment;
-  });
-
-  const [requests, setRequests] = useState<LoanRequest[]>(() => {
-    const s = localStorage.getItem('mock_requests');
-    return s ? JSON.parse(s) : initialRequests;
-  });
-
+  const [equipment, setEquipment] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Equipment | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  
+  const currentUser = getUser();
+  const isAdmin = currentUser?.role === 'Admin';
 
-  // ĐÃ SỬA: Chỉ đồng bộ danh sách requests do sinh viên tạo ra, tuyệt đối không lưu đè equipment tại đây
   useEffect(() => {
-    localStorage.setItem('mock_requests', JSON.stringify(requests));
-  }, [requests]);
+    const loadData = async () => {
+      if (!currentUser) return;
+      setLoading(true);
+      try {
+        const reqs: any[] = [
+          equipmentApi.getAll(),
+          loanRequestApi.getMyRequests(),
+        ];
+        if (isAdmin) {
+          reqs.push(userApi.getAll());
+        }
+        
+        const results = await Promise.all(reqs);
+        setEquipment(Array.isArray(results[0]) ? results[0] : []);
+        setRequests(Array.isArray(results[1]) ? results[1] : []);
+        if (isAdmin && results[2]) {
+          setUsers(results[2]);
+        }
+      } catch (error) {
+        console.error(error);
+        message.error('Không tải được dữ liệu thiết bị hoặc lịch sử mượn.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   const filteredEquipment = equipment.filter(
     (item) =>
-      item.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchKeyword.toLowerCase()),
+      item.name?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      item.category?.toLowerCase().includes(searchKeyword.toLowerCase()),
   );
 
-  const handleBorrow = (item: Equipment) => {
+  const handleBorrow = (item: any) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -62,28 +92,31 @@ const HomePage: React.FC = () => {
     try {
       const values = await form.validateFields();
       const [borrowDate, returnDate] = values.dateRange;
+      if (!currentUser || !selectedItem) {
+        message.error('Vui lòng đăng nhập và chọn thiết bị.');
+        return;
+      }
 
-      const currentUserStr = localStorage.getItem('currentUser');
-      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : {};
-      const currentUsername = currentUser.username || 'Sinh viên ẩn danh';
-
-      const newRequest: LoanRequest = {
-        id: Date.now(),
-        requester: currentUsername,
-        item: selectedItem!.name,
+      const userId = values.delegatedUserId || currentUser.id;
+      const created = await loanRequestApi.create({
+        userId,
+        equipmentId: selectedItem.id,
         borrowDate: borrowDate.format('YYYY-MM-DD'),
         returnDate: returnDate.format('YYYY-MM-DD'),
-        status: 'Pending',
-      };
+      });
 
-      setRequests([newRequest, ...requests]);
-      message.success(
-        'Đăng ký mượn thành công! Hãy sang Bảng điều khiển để duyệt đơn.',
-      );
+      // Only add to current list if borrowing for self to keep history accurate
+      if (userId === currentUser.id) {
+        setRequests([created, ...requests]);
+      }
+      
+      message.success('Đăng ký mượn thành công! Vui lòng chờ quản trị viên phê duyệt.');
       setIsModalOpen(false);
       form.resetFields();
-    } catch (error) {
-      console.log('Validate Failed:', error);
+    } catch (error: any) {
+      console.error(error);
+      const backendMsg = error?.response?.data?.message || error?.message;
+      message.error(backendMsg || 'Không thể tạo yêu cầu mượn. Vui lòng thử lại.');
     }
   };
 
@@ -104,7 +137,6 @@ const HomePage: React.FC = () => {
       subTitle="Danh sách thiết bị trong kho và lịch sử đăng ký"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* KHỐI 1: DANH SÁCH THIẾT BỊ KHẢ DỤNG */}
         <ProCard
           title={
             <span>
@@ -129,7 +161,8 @@ const HomePage: React.FC = () => {
               onChange={(e) => setSearchKeyword(e.target.value)}
             />
           </div>
-          <ProTable<Equipment>
+          <ProTable<any>
+            loading={loading}
             dataSource={filteredEquipment}
             rowKey="id"
             search={false}
@@ -149,10 +182,9 @@ const HomePage: React.FC = () => {
               {
                 title: 'Trạng thái',
                 render: (_, record) => {
-                  if (record.available === 0)
-                    return <Badge status="error" text="Hết hàng" />;
-                  if (record.status === 'Bảo trì')
-                    return <Badge status="warning" text="Đang bảo trì" />;
+                  const mapped = mapEquipmentStatus(record.status);
+                  if (record.available === 0) return <Badge status="error" text="Hết hàng" />;
+                  if (mapped === 'Bảo trì') return <Badge status="warning" text="Đang bảo trì" />;
                   return <Badge status="success" text="Sẵn sàng" />;
                 },
               },
@@ -164,9 +196,7 @@ const HomePage: React.FC = () => {
                     key="borrow"
                     type="primary"
                     size="small"
-                    disabled={
-                      record.available === 0 || record.status === 'Bảo trì'
-                    }
+                    disabled={record.available === 0 || record.status === 'Maintenance'}
                     onClick={() => handleBorrow(record)}
                   >
                     Đăng ký mượn
@@ -177,17 +207,17 @@ const HomePage: React.FC = () => {
           />
         </ProCard>
 
-        {/* KHỐI 2: LỊCH SỬ MƯỢN TRÊN TOÀN HỆ THỐNG */}
         <ProCard
           title={
             <span>
-              <HistoryOutlined /> Lịch sử mượn thiết bị toàn hệ thống
+              <HistoryOutlined /> Lịch sử mượn thiết bị của bạn
             </span>
           }
           bordered
           headerBordered
         >
-          <ProTable<LoanRequest>
+          <ProTable<any>
+            loading={loading}
             dataSource={requests}
             rowKey="id"
             search={false}
@@ -196,10 +226,14 @@ const HomePage: React.FC = () => {
             columns={[
               {
                 title: 'Người mượn',
-                dataIndex: 'requester',
-                render: (v) => <Text strong>{v}</Text>,
+                dataIndex: ['requester', 'username'],
+                render: (_, record) => <Text strong>{record.requester?.username || 'N/A'}</Text>,
               },
-              { title: 'Thiết bị', dataIndex: 'item' },
+              {
+                title: 'Thiết bị',
+                dataIndex: ['equipment', 'name'],
+                render: (_, record) => record.equipment?.name || 'N/A',
+              },
               { title: 'Ngày mượn', dataIndex: 'borrowDate' },
               { title: 'Ngày trả dự kiến', dataIndex: 'returnDate' },
               {
@@ -245,13 +279,26 @@ const HomePage: React.FC = () => {
             {selectedItem?.name}
           </Text>
         </div>
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" preserve={false}>
+          {isAdmin && (
+            <Form.Item
+              name="delegatedUserId"
+              label="Người mượn (Ủy quyền)"
+              tooltip="Chỉ Admin mới có thể đăng ký mượn thay cho người khác"
+            >
+              <Select placeholder="Chọn người dùng (mặc định là bạn)" allowClear showSearch optionFilterProp="children">
+                {users.map((u) => (
+                  <Select.Option key={u.id} value={u.id}>
+                    {u.username} ({u.role})
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
           <Form.Item
             name="dateRange"
             label="Thời gian mượn - trả"
-            rules={[
-              { required: true, message: 'Vui lòng chọn thời gian mượn!' },
-            ]}
+            rules={[{ required: true, message: 'Vui lòng chọn thời gian mượn!' }]}
           >
             <RangePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
           </Form.Item>

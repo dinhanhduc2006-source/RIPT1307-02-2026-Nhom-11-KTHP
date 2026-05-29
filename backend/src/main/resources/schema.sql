@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0; -- Temporarily disable foreign key checks for smooth
 
 -- 1. USERS (User Accounts)
 CREATE TABLE users (
-                       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                        username VARCHAR(50) NOT NULL COMMENT 'Unique login username',
                        email VARCHAR(150) NOT NULL COMMENT 'Unique email address',
                        password VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password',
@@ -29,8 +29,8 @@ COMMENT='System user accounts';
 
 -- 2. REFRESH_TOKENS (JWT Authentication Lifecycle)
 CREATE TABLE refresh_tokens (
-                                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                user_id INT UNSIGNED NOT NULL,
+                                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                                user_id BIGINT UNSIGNED NOT NULL,
                                 token VARCHAR(255) NOT NULL,
                                 expiry_date DATETIME NOT NULL,
                                 is_revoked TINYINT(1) NOT NULL DEFAULT 0,
@@ -44,12 +44,12 @@ COMMENT='Manages JWT refresh tokens and revocation';
 
 -- 3. EQUIPMENT (Inventory Management)
 CREATE TABLE equipment (
-                           id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                           id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                            name VARCHAR(150) NOT NULL COMMENT 'Unique equipment name in inventory',
                            category VARCHAR(100) NOT NULL COMMENT 'Category (Projection, Audio, IT, Video...)',
                            available INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Currently available quantity (must be <= total)',
                            total INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total quantity owned by inventory',
-                           status ENUM('Available', 'Out of Stock', 'Maintenance') NOT NULL DEFAULT 'Available' COMMENT 'Equipment status',
+                           status ENUM('Available', 'OutOfStock', 'Maintenance') NOT NULL DEFAULT 'Available' COMMENT 'Equipment status',
                            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -63,9 +63,9 @@ COMMENT='Club equipment inventory data';
 
 -- 4. LOAN_REQUESTS (Lending & Return Transactions)
 CREATE TABLE loan_requests (
-                               id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                               requester_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (borrower)',
-                               equipment_id INT UNSIGNED NOT NULL COMMENT 'FK to equipment table (item borrowed)',
+                               id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                               requester_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (borrower)',
+                               equipment_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to equipment table (item borrowed)',
                                borrow_date DATE NOT NULL COMMENT 'Expected start date of loan',
                                return_date DATE NOT NULL COMMENT 'Expected return date',
                                status ENUM('Pending', 'Approved', 'Rejected', 'Returned') NOT NULL DEFAULT 'Pending' COMMENT 'Request status',
@@ -85,12 +85,12 @@ COMMENT='Equipment loan requests tracking';
 
 -- 5. POSTS (Forum Discussions)
 CREATE TABLE posts (
-                       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                        title VARCHAR(255) NOT NULL COMMENT 'Forum post title',
                        content TEXT NOT NULL COMMENT 'Full body text of the post',
                        category VARCHAR(100) NOT NULL COMMENT 'Forum category (Learning, Event, Feedback...)',
                        tags TEXT NULL COMMENT 'Comma-separated string of keywords/labels',
-                       author_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (author)',
+                       author_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (author)',
                        created_at DATE NOT NULL COMMENT 'Publishing date',
                        comments INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total comments count',
                        positive INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total likes count',
@@ -106,11 +106,11 @@ COMMENT='Community forum discussion posts';
 
 -- 6. ANNOUNCEMENTS (System Official Notices)
 CREATE TABLE announcements (
-                               id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                               id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                                title VARCHAR(255) NOT NULL COMMENT 'Notice headline',
                                content TEXT NOT NULL COMMENT 'Detailed content of the announcement',
                                status ENUM('Active', 'Draft', 'Archived') NOT NULL DEFAULT 'Active' COMMENT 'Publishing status',
-                               author_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (admin creator)',
+                               author_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (admin creator)',
                                created_at DATE NOT NULL COMMENT 'Creation date',
                                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -122,13 +122,13 @@ COMMENT='Official system-wide announcements from administration';
 
 -- 7. MAINTENANCE_TICKETS (Equipment Repairs Log)
 CREATE TABLE maintenance_tickets (
-                                     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                     equipment_id INT UNSIGNED NOT NULL COMMENT 'FK to equipment table',
+                                     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                                     equipment_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to equipment table',
                                      issue TEXT NOT NULL COMMENT 'Description of damage or issue',
                                      cost INT UNSIGNED NULL COMMENT 'Estimated or actual repair cost (VND)',
-                                     status ENUM('Awaiting Approval', 'Under Repair', 'Completed') NOT NULL DEFAULT 'Awaiting Approval' COMMENT 'Progress state',
+                                     status ENUM('AwaitingApproval', 'UnderRepair', 'Completed') NOT NULL DEFAULT 'AwaitingApproval' COMMENT 'Progress state',
                                      date DATE NOT NULL COMMENT 'Ticket creation date',
-                                     reporter_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (person reporting the issue)',
+                                     reporter_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (person reporting the issue)',
                                      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -141,9 +141,9 @@ COMMENT='Tracks maintenance and repair activities for equipment';
 
 -- 8. PENALTIES (Fines & Violations)
 CREATE TABLE penalties (
-                           id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                           user_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (violator)',
-                           loan_request_id INT UNSIGNED NULL COMMENT 'FK to loan_requests table (related loan)',
+                           id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                           user_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (violator)',
+                           loan_request_id BIGINT UNSIGNED NULL COMMENT 'FK to loan_requests table (related loan)',
                            reason TEXT NOT NULL COMMENT 'Detailed reason for penalty generation',
                            amount INT UNSIGNED NOT NULL COMMENT 'Fine amount in VND',
                            status ENUM('Unpaid', 'Paid') NOT NULL DEFAULT 'Unpaid' COMMENT 'Payment collection state',
@@ -161,9 +161,9 @@ COMMENT='Fines and lending rule violations management';
 
 -- 9. AUDIT_LOGS (System Operations Tracking)
 CREATE TABLE audit_logs (
-                            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp of operation execution',
-                            user_id INT UNSIGNED NOT NULL COMMENT 'FK to users table (actor)',
+                            user_id BIGINT UNSIGNED NOT NULL COMMENT 'FK to users table (actor)',
                             action VARCHAR(100) NOT NULL COMMENT 'Name of business action executed',
                             detail TEXT NOT NULL COMMENT 'Full textual description of operation details',
 
@@ -193,9 +193,9 @@ COMMENT='Global dynamic operational parameters for system business rules';
 
 -- Default credentials (Password '123456' hashed via BCrypt cost=10)
 INSERT INTO users (id, username, email, password, role, status, created_at) VALUES
-                                                                                (1, 'admin', 'admin@clb.edu.vn', '$2a$10$Eux/p917mR7sYQvY26.Oye7w7oH4lqJgq6C4LhP9xT3bQk0H1zW6G', 'Admin', 'Active', '2026-05-26'),
-                                                                                (2, 'sv01', 'sinhvien01@clb.edu.vn', '$2a$10$Eux/p917mR7sYQvY26.Oye7w7oH4lqJgq6C4LhP9xT3bQk0H1zW6G', 'Student', 'Active', '2026-05-26'),
-                                                                                (3, 'gv01', 'giangvien01@clb.edu.vn', '$2a$10$Eux/p917mR7sYQvY26.Oye7w7oH4lqJgq6C4LhP9xT3bQk0H1zW6G', 'Faculty', 'Locked', '2026-05-26');
+                                                                                (1, 'admin', 'admin@clb.edu.vn', '$2b$10$IBlBfaloGwtlACDt41S3yexLGyfuUGA4zBuhWZiBW/ywRVod2Uvbe', 'Admin', 'Active', '2026-05-26'),
+                                                                                (2, 'sv01', 'sinhvien01@clb.edu.vn', '$2b$10$IBlBfaloGwtlACDt41S3yexLGyfuUGA4zBuhWZiBW/ywRVod2Uvbe', 'Student', 'Active', '2026-05-26'),
+                                                                                (3, 'gv01', 'giangvien01@clb.edu.vn', '$2b$10$IBlBfaloGwtlACDt41S3yexLGyfuUGA4zBuhWZiBW/ywRVod2Uvbe', 'Faculty', 'Locked', '2026-05-26');
 
 -- Initial equipment list
 INSERT INTO equipment (id, name, category, available, total, status) VALUES

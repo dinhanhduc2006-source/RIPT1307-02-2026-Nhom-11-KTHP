@@ -7,4 +7,5 @@ public interface PenaltyService {
     List<Penalty> getMyPenalties(Long userId);
     List<Penalty> getAll();
     Penalty payPenalty(Long penaltyId);
+    Penalty createPenalty(com.lending.backend.dto.PenaltyCreateRequest request);
 }

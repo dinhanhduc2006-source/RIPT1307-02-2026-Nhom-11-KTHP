@@ -2,50 +2,65 @@ import { PlusOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
 import { Button, Form, Input, message, Modal, Select, Space, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Announcement, initialAnnouncements } from '../Admin/data';
+import { announcementApi, getUser } from '@/services/api';
 
 const NotificationsPage: React.FC = () => {
-  const [data, setData] = useState<Announcement[]>(() => {
-    const s = localStorage.getItem('mock_notifications');
-    return s ? JSON.parse(s) : initialAnnouncements;
-  });
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    localStorage.setItem('mock_notifications', JSON.stringify(data));
-  }, [data]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await announcementApi.getAll();
+      setData(res || []);
+    } catch (error) {
+      message.error('Không thể tải thông báo');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const openModal = (record?: Announcement) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const openModal = (record?: any) => {
     setEditingId(record?.id || null);
     form.setFieldsValue(record || { status: 'Active' });
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
-    const values = await form.validateFields();
-    if (editingId) {
-      setData(
-        data.map((item) =>
-          item.id === editingId ? { ...item, ...values } : item,
-        ),
-      );
-      message.success('Đã cập nhật thông báo!');
-    } else {
-      setData([
-        {
-          ...values,
-          id: Date.now(),
-          author: 'Quản trị viên',
-          createdAt: new Date().toISOString().split('T')[0],
-        },
-        ...data,
-      ]);
-      message.success('Đã đăng thông báo mới!');
+    try {
+      const values = await form.validateFields();
+      const user = getUser();
+      
+      if (editingId) {
+        await announcementApi.update(editingId, values);
+        message.success('Đã cập nhật thông báo!');
+      } else {
+        await announcementApi.create(values);
+        message.success('Đã đăng thông báo mới!');
+      }
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchData();
+    } catch (e) {
+      message.error('Lỗi khi lưu thông báo');
     }
-    setIsModalOpen(false);
-    form.resetFields();
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await announcementApi.delete(id);
+      message.success('Đã xóa thông báo');
+      fetchData();
+    } catch (error) {
+      message.error('Xóa thất bại');
+    }
   };
 
   return (
@@ -59,7 +74,8 @@ const NotificationsPage: React.FC = () => {
         >
           Tạo thông báo
         </Button>
-        <ProTable<Announcement>
+        <ProTable<any>
+          loading={loading}
           dataSource={data}
           rowKey="id"
           search={false}
@@ -73,7 +89,11 @@ const NotificationsPage: React.FC = () => {
                 <Tag color={s === 'Active' ? 'green' : 'gray'}>{s}</Tag>
               ),
             },
-            { title: 'Ngày tạo', dataIndex: 'createdAt' },
+            { 
+              title: 'Ngày tạo', 
+              dataIndex: 'createdAt',
+              render: (v: any) => v || '-'
+            },
             {
               title: 'Thao tác',
               render: (_, r) => (
@@ -81,7 +101,7 @@ const NotificationsPage: React.FC = () => {
                   <a onClick={() => openModal(r)}>Sửa</a>
                   <a
                     style={{ color: 'red' }}
-                    onClick={() => setData(data.filter((i) => i.id !== r.id))}
+                    onClick={() => handleDelete(r.id)}
                   >
                     Xóa
                   </a>

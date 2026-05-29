@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[866],{37025:function(a,u,n){n.r(u);var i=n(15133),l=n(67294),e=n(25538),t=function(){return(0,l.useEffect)(function(){if((0,e.$8)()){var s=(0,e.PR)();(s==null?void 0:s.role)==="Admin"?i.history.push("/admin"):i.history.push("/client-home")}else i.history.push("/login")},[]),null};u.default=t}}]);

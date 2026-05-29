@@ -1,9 +1,11 @@
-// ĐÃ SỬA: Đọc đúng chuẩn dữ liệu từ initialState cấp phát thay vì can thiệp đọc trộm localStorage
+import { getUser } from '@/services/api';
+
+// Đã dùng dữ liệu đăng nhập backend từ initialState
 export default function access(initialState: { currentUser: any } | undefined) {
-  const { currentUser } = initialState || {};
+  const currentUser = initialState?.currentUser ?? (typeof window !== 'undefined' ? getUser() : undefined);
 
   return {
-    // Nếu vai trò của tài khoản khớp hoàn toàn với Quản trị viên -> Cho phép xem các menu Admin
-    canAdmin: currentUser?.role === 'Quản trị viên',
+    // Dùng role backend ('Admin') để mở menu Admin
+    canAdmin: currentUser?.role === 'Admin',
   };
 }

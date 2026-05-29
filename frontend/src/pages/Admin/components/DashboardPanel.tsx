@@ -62,7 +62,8 @@ const DashboardPanel: React.FC<Props> = ({ posts, equipment, requests }) => {
     });
     requests.forEach((request) => {
       if (request.status === 'Approved' || request.status === 'Returned') {
-        counts[request.item] = (counts[request.item] || 0) + 1;
+        const name = request.equipment.name;
+        counts[name] = (counts[name] || 0) + 1;
       }
     });
     return Object.entries(counts).map(([item, count]) => ({ item, count }));

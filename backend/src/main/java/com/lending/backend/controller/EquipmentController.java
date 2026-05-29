@@ -2,6 +2,7 @@ package com.lending.backend.controller;
 
 import com.lending.backend.common.ResponseResult;
 import com.lending.backend.entity.Equipment;
+import com.lending.backend.entity.User;
 import com.lending.backend.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +23,7 @@ public class EquipmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseResult<Equipment> getById(@PathVariable Long id) {
+    public ResponseResult<Equipment> getById(@PathVariable("id") Long id) {
         return ResponseResult.success(equipmentService.getById(id));
     }
 
@@ -34,13 +35,13 @@ public class EquipmentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseResult<Equipment> update(@PathVariable Long id, @RequestBody Equipment equipment) {
+    public ResponseResult<Equipment> update(@PathVariable("id") Long id, @RequestBody Equipment equipment) {
         return ResponseResult.success(equipmentService.updateEquipment(id, equipment));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseResult<String> delete(@PathVariable Long id) {
+    public ResponseResult<String> delete(@PathVariable("id") Long id) {
         equipmentService.deleteEquipment(id);
         return ResponseResult.success("Deleted successfully");
     }
@@ -48,9 +49,9 @@ public class EquipmentController {
     @PostMapping("/{id}/maintenance")
     @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
     public ResponseResult<Equipment> setMaintenance(
-            @PathVariable Long id, 
-            @RequestParam Long reporterId, 
-            @RequestParam String issue) {
-        return ResponseResult.success(equipmentService.setMaintenance(id, reporterId, issue));
+            @PathVariable("id") Long id, 
+            @RequestParam("issue") String issue) {
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(equipmentService.setMaintenance(id, currentUser.getId(), issue));
     }
 }

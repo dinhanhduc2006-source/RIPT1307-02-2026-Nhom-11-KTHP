@@ -6,14 +6,14 @@ interface Props {
   name: string;
 }
 
-// 脚手架示例组件
+// Component mẫu hướng dẫn sử dụng
 const Guide: React.FC<Props> = (props) => {
   const { name } = props;
   return (
     <Layout>
       <Row>
         <Typography.Title level={3} className={styles.title}>
-          欢迎使用 <strong>{name}</strong> ！
+          Chào mừng bạn đến với <strong>{name}</strong> !
         </Typography.Title>
       </Row>
     </Layout>

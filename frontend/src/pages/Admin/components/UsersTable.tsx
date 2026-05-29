@@ -34,7 +34,7 @@ const UsersTable: React.FC<Props> = ({ users, onSaveUser, onToggleLock }) => {
       setEditingUser(null);
       form.resetFields();
     } catch (error) {
-      console.log('Xác thực form thất bại hoặc lỗi lưu trữ:', error);
+      console.error('Xác thực form thất bại hoặc lỗi lưu trữ:', error);
     }
   };
 
