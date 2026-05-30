@@ -47,7 +47,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/equipments/**").permitAll()
+                
+                // SỬA DÒNG NÀY: Thêm cả "/api/v1/equipment/**" để chấp nhận cả link không có chữ 's'
+                .requestMatchers("/api/v1/equipments/**", "/api/v1/equipment/**").permitAll()
+                
+                // THÊM DÒNG NÀY: Cho phép truy cập vào tất cả các API mượn đồ, lịch sử mượn
+                .requestMatchers("/api/v1/loan-requests/**").permitAll()
+                
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
