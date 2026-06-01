@@ -107,7 +107,7 @@ export const postApi = {
 };
 
 export const announcementApi = {
-  getActive: () => publicRequest(`${API_BASE}/announcements/active`),
+  getActive: () => authRequest(`${API_BASE}/announcements/active`),
   getAll: () => authRequest(`${API_BASE}/announcements`),
   create: (data: any) =>
     authRequest(`${API_BASE}/announcements`, { method: 'POST', data }),
