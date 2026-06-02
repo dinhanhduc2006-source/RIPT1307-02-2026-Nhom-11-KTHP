@@ -23,7 +23,7 @@ const ClientHome: React.FC = () => {
             extra={[
               <Button key="logout" type="primary" onClick={handleLogout}>
                 Đăng xuất
-              </Button>,
+              </Button>
             ]}
           />
           <div style={{ marginTop: '40px', textAlign: 'center' }}>
