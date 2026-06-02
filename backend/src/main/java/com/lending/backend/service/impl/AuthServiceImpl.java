@@ -1,11 +1,17 @@
 package com.lending.backend.service.impl;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.lending.backend.dto.AuthResponse;
 import com.lending.backend.dto.LoginRequest;
 import com.lending.backend.dto.RegisterRequest;
+import com.lending.backend.dto.GoogleLoginRequest;
 import com.lending.backend.entity.RefreshToken;
 import com.lending.backend.entity.User;
 import com.lending.backend.enums.UserRole;
@@ -19,6 +25,7 @@ import com.lending.backend.service.RefreshTokenService;
 import com.lending.backend.util.JwtUtils;
 
 import lombok.RequiredArgsConstructor;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +36,9 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final UserMapper userMapper;
     private final RefreshTokenService refreshTokenService;
+
+    @Value("${google.client-id:}")
+    private String googleClientId;
 
     @Override
     public void register(RegisterRequest request) {
@@ -66,6 +76,45 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken.getToken())
                 .user(userMapper.toUserResponse(user))
                 .build();
+    }
+
+    @Override
+    public AuthResponse googleLogin(GoogleLoginRequest request) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(request.getIdToken());
+            if (idToken == null) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = User.builder()
+                        .username(email.split("@")[0] + "_" + System.currentTimeMillis() % 1000)
+                        .email(email)
+                        .password(passwordEncoder.encode("GOOGLE_AUTH_PWD_" + System.currentTimeMillis()))
+                        .role(UserRole.Student)
+                        .status(UserStatus.Active)
+                        .build();
+                return userRepository.save(newUser);
+            });
+
+            String token = jwtUtils.generateToken(user.getEmail());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+            return AuthResponse.builder()
+                    .token(token)
+                    .refreshToken(refreshToken.getToken())
+                    .user(userMapper.toUserResponse(user))
+                    .build();
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
     }
 
     @Override
