@@ -10,7 +10,7 @@ export default defineConfig({
   },
 
   define: {
-    'process.env.API_URL': 'https://ript1307-02-2026-nhom-11-kthp-production.up.railway.app',
+    'process.env.API_URL': '"https://ript1307-02-2026-nhom-11-kthp-production.up.railway.app/api/v1"'
   },
 
   antd: {},
