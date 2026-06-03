@@ -4,6 +4,7 @@ import com.lending.backend.common.ResponseResult;
 import com.lending.backend.dto.AuthResponse;
 import com.lending.backend.dto.LoginRequest;
 import com.lending.backend.dto.RegisterRequest;
+import com.lending.backend.dto.GoogleLoginRequest;
 import com.lending.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,12 @@ public class AuthController {
     public ResponseResult<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("Received login request for identifier: {}", request.getIdentifier());
         return ResponseResult.success(authService.login(request));
+    }
+
+    @PostMapping("/google-login")
+    public ResponseResult<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        log.info("Received Google login request");
+        return ResponseResult.success(authService.googleLogin(request));
     }
 
     @PostMapping("/refresh-token")
