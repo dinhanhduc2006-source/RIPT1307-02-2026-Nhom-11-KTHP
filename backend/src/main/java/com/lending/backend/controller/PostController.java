@@ -32,4 +32,16 @@ public class PostController {
         postService.deletePost(id);
         return ResponseResult.success("Post deleted");
     }
+
+    @PatchMapping("/{id}/upvote")
+    public ResponseResult<String> upvote(@PathVariable("id") Long id) {
+        postService.upvotePost(id);
+        return ResponseResult.success("Upvoted");
+    }
+
+    @PatchMapping("/{id}/downvote")
+    public ResponseResult<String> downvote(@PathVariable("id") Long id) {
+        postService.downvotePost(id);
+        return ResponseResult.success("Downvoted");
+    }
 }

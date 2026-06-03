@@ -16,6 +16,7 @@ CREATE TABLE users (
                        password VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password',
                        role ENUM('Student', 'Faculty', 'Admin') NOT NULL DEFAULT 'Student' COMMENT 'User access role',
                        status ENUM('Active', 'Locked') NOT NULL DEFAULT 'Active' COMMENT 'Account status',
+                       avatar TEXT NULL COMMENT 'Base64 encoded avatar image',
                        created_at DATE NOT NULL COMMENT 'Account creation date',
                        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -98,11 +99,23 @@ CREATE TABLE posts (
                        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
                        PRIMARY KEY (id),
-                       INDEX idx_posts_author (author_id),
                        INDEX idx_posts_created (created_at),
                        CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Community forum discussion posts';
+
+-- 5.1 COMMENTS (Post Discussions)
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    content TEXT NOT NULL,
+    post_id BIGINT UNSIGNED NOT NULL,
+    author_id BIGINT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comments_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Discussion post comments';
 
 -- 6. ANNOUNCEMENTS (System Official Notices)
 CREATE TABLE announcements (

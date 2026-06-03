@@ -17,7 +17,7 @@ const UsersTable: React.FC<Props> = ({ users, onSaveUser, onToggleLock }) => {
 
   const openModal = (user?: User) => {
     setEditingUser(user || null);
-    form.setFieldsValue(user || { role: 'Sinh viên' });
+    form.setFieldsValue(user || { role: 'Student' });
     setModalVisible(true);
   };
 
@@ -149,9 +149,9 @@ const UsersTable: React.FC<Props> = ({ users, onSaveUser, onToggleLock }) => {
             rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
           >
             <Select>
-              <Select.Option value="Sinh viên">Sinh viên</Select.Option>
-              <Select.Option value="Giảng viên">Giảng viên</Select.Option>
-              <Select.Option value="Quản trị viên">Quản trị viên</Select.Option>
+              <Select.Option value="Student">Sinh viên</Select.Option>
+              <Select.Option value="Faculty">Giảng viên</Select.Option>
+              <Select.Option value="Admin">Quản trị viên</Select.Option>
             </Select>
           </Form.Item>
         </Form>

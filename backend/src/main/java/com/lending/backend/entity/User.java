@@ -41,6 +41,9 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
+    @Column(columnDefinition = "TEXT")
+    private String avatar;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDate createdAt;

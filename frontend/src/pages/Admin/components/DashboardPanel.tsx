@@ -8,19 +8,21 @@ import {
 import { ProCard } from '@ant-design/pro-components';
 import { Alert, Col, Row, Statistic, Typography } from 'antd';
 import React, { useMemo } from 'react';
-import { Equipment, LoanRequest, Post } from '../data';
+import { Equipment, LoanRequest, Post, User } from '../data';
 
 const { Title } = Typography;
 
 type Props = {
   posts: Post[];
+  users: User[];
   equipment: Equipment[];
   requests: LoanRequest[];
 };
 
-const DashboardPanel: React.FC<Props> = ({ posts, equipment, requests }) => {
+const DashboardPanel: React.FC<Props> = ({ posts, users, equipment, requests }) => {
   // Thống kê sơ bộ
   const totalPosts = posts.length;
+  const totalUsers = users.length;
   const availableDevices = equipment.reduce(
     (total, item) => total + item.available,
     0,
@@ -37,19 +39,21 @@ const DashboardPanel: React.FC<Props> = ({ posts, equipment, requests }) => {
     );
   }, [requests]);
 
-  // Dữ liệu biểu đồ tròn
+  // Dữ liệu biểu đồ tròn (Đã dịch sang Tiếng Việt)
   const requestChartData = useMemo(() => {
-    const statusMap: Record<string, number> = {
-      Pending: 0,
-      Approved: 0,
-      Rejected: 0,
-      Returned: 0,
+    const statusMap: Record<string, { count: number; label: string }> = {
+      Pending: { count: 0, label: 'Chờ duyệt' },
+      Approved: { count: 0, label: 'Đang mượn' },
+      Rejected: { count: 0, label: 'Bị từ chối' },
+      Returned: { count: 0, label: 'Đã trả' },
     };
     requests.forEach((request) => {
-      statusMap[request.status] = (statusMap[request.status] || 0) + 1;
+      if (statusMap[request.status]) {
+        statusMap[request.status].count += 1;
+      }
     });
-    return Object.entries(statusMap).map(([status, count]) => ({
-      status,
+    return Object.values(statusMap).map(({ label, count }) => ({
+      status: label,
       count,
     }));
   }, [requests]);
@@ -109,7 +113,7 @@ const DashboardPanel: React.FC<Props> = ({ posts, equipment, requests }) => {
             </ProCard>
           </Col>
 
-          {/* SỬA LỖI 2: Thêm cảnh báo Quá Hạn đỏ chót */}
+          {/* Cảnh báo Quá Hạn */}
           <Col span={24}>
             <ProCard
               bordered

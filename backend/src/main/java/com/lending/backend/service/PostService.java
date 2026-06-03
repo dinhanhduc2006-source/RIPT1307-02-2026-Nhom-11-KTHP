@@ -8,4 +8,6 @@ public interface PostService {
     List<Post> getAll();
     Post getById(Long id);
     void deletePost(Long id);
+    void upvotePost(Long id);
+    void downvotePost(Long id);
 }

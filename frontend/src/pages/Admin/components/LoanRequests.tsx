@@ -90,7 +90,7 @@ const LoanRequests: React.FC<Props> = ({
           {
             title: 'Người yêu cầu',
             dataIndex: 'requester',
-            render: (v) => <Text strong>{v.username}</Text>,
+            render: (v: any) => <Text strong>{v?.username || 'N/A'}</Text>,
           },
           {
             title: 'Thiết bị',
