@@ -19,8 +19,6 @@ import {
   User,
 } from './data';
 
-const { TabPane } = Tabs;
-
 const AdminPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -137,42 +135,66 @@ const AdminPage: React.FC = () => {
   return (
     <PageContainer header={{ title: 'Bảng điều khiển hệ thống Quản trị' }}>
       <Spin spinning={loading}>
-        <Tabs defaultActiveKey="dashboard" type="card">
-          <TabPane tab="Tổng quan" key="dashboard">
-            <DashboardPanel
-              posts={posts}
-              users={users}
-              equipment={equipment}
-              requests={requests}
-            />
-          </TabPane>
-          <TabPane tab="Bài đăng" key="posts">
-            <PostsTable posts={posts} onDeletePost={handleDeletePost} />
-          </TabPane>
-          <TabPane tab="Thiết bị" key="equipment">
-            <EquipmentPanel
-              equipment={equipment}
-              requests={requests}
-              onSaveEquipment={handleSaveEquipment}
-              onDeleteEquipment={handleDeleteEquipment}
-            />
-          </TabPane>
-          <TabPane tab="Người dùng" key="users">
-            <UsersTable
-              users={users}
-              onSaveUser={handleSaveUser}
-              onToggleLock={handleToggleLock}
-            />
-          </TabPane>
-          <TabPane tab="Yêu cầu mượn" key="requests">
-            <LoanRequests
-              requests={requests}
-              onApprove={handleApproveRequest}
-              onReject={handleRejectRequest}
-              onReturn={handleReturnRequest}
-            />
-          </TabPane>
-        </Tabs>
+        <Tabs
+            defaultActiveKey="dashboard"
+            type="card"
+            items={[
+              {
+                key: 'dashboard',
+                label: 'Tổng quan',
+                children: (
+                  <DashboardPanel
+                    posts={posts}
+                    users={users}
+                    equipment={equipment}
+                    requests={requests}
+                  />
+                ),
+              },
+              {
+                key: 'requests',
+                label: 'Yêu cầu mượn',
+                children: (
+                  <LoanRequests
+                    requests={requests}
+                    onApprove={handleApproveRequest}
+                    onReject={handleRejectRequest}
+                    onReturn={handleReturnRequest}
+                  />
+                ),
+              },
+              {
+                key: 'equipment',
+                label: 'Kho thiết bị',
+                children: (
+                  <EquipmentPanel
+                    equipment={equipment}
+                    requests={requests}
+                    onSaveEquipment={handleSaveEquipment}
+                    onDeleteEquipment={handleDeleteEquipment}
+                  />
+                ),
+              },
+              {
+                key: 'users',
+                label: 'Người dùng',
+                children: (
+                  <UsersTable
+                    users={users}
+                    onSaveUser={handleSaveUser}
+                    onToggleLock={handleToggleLock}
+                  />
+                ),
+              },
+              {
+                key: 'posts',
+                label: 'Diễn đàn',
+                children: (
+                  <PostsTable posts={posts} onDeletePost={handleDeletePost} />
+                ),
+              },
+            ]}
+          />
       </Spin>
     </PageContainer>
   );

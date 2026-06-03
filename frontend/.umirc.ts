@@ -14,6 +14,8 @@ export default defineConfig({
   model: {},
   initialState: {},
   request: {},
+  tailwindcss: {},
+  mfsu: false, // MFSU can sometimes clash with Tailwind in cold starts
 
   locale: {
     default: 'vi-VN',
@@ -34,7 +36,8 @@ export default defineConfig({
   },
 
   routes: [
-    { path: '/', component: './index' },
+    { path: '/', component: './Landing', layout: false },
+    { path: '/redirect', component: './index' },
     {
       name: 'Trang chủ Client',
       path: '/client-home',
@@ -128,6 +131,16 @@ export default defineConfig({
     },
     { path: '/login', component: './Login', layout: false },
     { path: '/signup', component: './SignUp', layout: false },
+  ],
+  links: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
+    },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap',
+    },
   ],
   npmClient: 'npm',
 });

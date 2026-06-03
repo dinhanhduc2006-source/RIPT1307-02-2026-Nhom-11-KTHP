@@ -69,6 +69,7 @@ export const authApi = {
 export const equipmentApi = {
   getAll: () => authRequest(`${API_BASE}/equipments`),
   getById: (id: number) => authRequest(`${API_BASE}/equipments/${id}`),
+  getStats: () => authRequest(`${API_BASE}/equipments/stats`),
   create: (data: any) => authRequest(`${API_BASE}/equipments`, { method: 'POST', data }),
   update: (id: number, data: any) => authRequest(`${API_BASE}/equipments/${id}`, { method: 'PUT', data }),
   delete: (id: number) => authRequest(`${API_BASE}/equipments/${id}`, { method: 'DELETE' }),
@@ -104,10 +105,19 @@ export const postApi = {
   create: (data: any) =>
     authRequest(`${API_BASE}/posts`, { method: 'POST', data }),
   delete: (id: number) => authRequest(`${API_BASE}/posts/${id}`, { method: 'DELETE' }),
+  upvote: (id: number) => authRequest(`${API_BASE}/posts/${id}/upvote`, { method: 'PATCH' }),
+  downvote: (id: number) => authRequest(`${API_BASE}/posts/${id}/downvote`, { method: 'PATCH' }),
+};
+
+export const commentApi = {
+  getByPost: (postId: number) => authRequest(`${API_BASE}/comments/post/${postId}`),
+  create: (postId: number, data: { content: string }) =>
+    authRequest(`${API_BASE}/comments/post/${postId}`, { method: 'POST', data }),
+  delete: (id: number) => authRequest(`${API_BASE}/comments/${id}`, { method: 'DELETE' }),
 };
 
 export const announcementApi = {
-  getActive: () => publicRequest(`${API_BASE}/announcements/active`),
+  getActive: () => authRequest(`${API_BASE}/announcements/active`),
   getAll: () => authRequest(`${API_BASE}/announcements`),
   create: (data: any) =>
     authRequest(`${API_BASE}/announcements`, { method: 'POST', data }),
@@ -145,6 +155,14 @@ export const configApi = {
 export const userApi = {
   getAll: () => authRequest(`${API_BASE}/users`),
   getById: (id: number) => authRequest(`${API_BASE}/users/${id}`),
+  updateProfile: (id: number, data: any) =>
+    authRequest(`${API_BASE}/users/${id}/profile`, { method: 'PATCH', data }),
+  uploadAvatar: (id: number, formData: FormData) =>
+    authRequest(`${API_BASE}/users/${id}/avatar`, { 
+      method: 'POST', 
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
   updateStatus: (id: number, status: string) => authRequest(`${API_BASE}/users/${id}/status`, { method: 'PATCH', params: { status } }),
   changePassword: (id: number, oldPassword: string, newPassword: string) => 
     authRequest(`${API_BASE}/users/${id}/change-password`, { 

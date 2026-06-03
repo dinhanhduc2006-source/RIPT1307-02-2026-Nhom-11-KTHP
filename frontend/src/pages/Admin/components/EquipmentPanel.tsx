@@ -66,7 +66,6 @@ const EquipmentPanel: React.FC<Props> = ({
     setModalVisible(true);
   };
 
-  // SỬA LỖI 1: Chặn không cho nhập số Sẵn có lớn hơn Tổng
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
@@ -84,7 +83,6 @@ const EquipmentPanel: React.FC<Props> = ({
     }
   };
 
-  // SỬA LỖI 2: Chặn xóa thiết bị nếu đang có người mượn
   const handleDelete = (record: Equipment) => {
     const isBeingBorrowed = requests.some(
       (req) => req.equipment.name === record.name && req.status === 'Approved',
@@ -137,14 +135,14 @@ const EquipmentPanel: React.FC<Props> = ({
                   color={
                     r.status === 'Available'
                       ? 'success'
-                      : r.status === 'Out of Stock'
+                      : r.status === 'OutOfStock'
                       ? 'error'
                       : 'warning'
                   }
                 >
                   {r.status === 'Available'
                     ? 'Sẵn sàng'
-                    : r.status === 'Out of Stock'
+                    : r.status === 'OutOfStock'
                     ? 'Hết hàng'
                     : 'Bảo trì'}
                 </Tag>
@@ -232,7 +230,7 @@ const EquipmentPanel: React.FC<Props> = ({
           <Form.Item name="status" label="Trạng thái">
             <Select>
               <Select.Option value="Available">Sẵn sàng</Select.Option>
-              <Select.Option value="Out of Stock">Hết hàng</Select.Option>
+              <Select.Option value="OutOfStock">Hết hàng</Select.Option>
               <Select.Option value="Maintenance">Bảo trì</Select.Option>
             </Select>
           </Form.Item>

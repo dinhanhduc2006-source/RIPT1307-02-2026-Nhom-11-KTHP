@@ -47,4 +47,20 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long id) {
         postRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public void upvotePost(Long id) {
+        Post post = getById(id);
+        post.setPositive((post.getPositive() == null ? 0 : post.getPositive()) + 1);
+        postRepository.save(post);
+    }
+
+    @Override
+    @Transactional
+    public void downvotePost(Long id) {
+        Post post = getById(id);
+        post.setNegative((post.getNegative() == null ? 0 : post.getNegative()) + 1);
+        postRepository.save(post);
+    }
 }

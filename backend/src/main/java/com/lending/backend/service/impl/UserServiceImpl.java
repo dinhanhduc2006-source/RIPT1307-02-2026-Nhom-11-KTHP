@@ -66,4 +66,28 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public User updateProfile(Long id, User data) {
+        User user = getById(id);
+        user.setUsername(data.getUsername());
+        user.setEmail(data.getEmail());
+        return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public User uploadAvatar(Long id, org.springframework.web.multipart.MultipartFile file) {
+        User user = getById(id);
+        try {
+            byte[] bytes = file.getBytes();
+            String base64 = "data:" + file.getContentType() + ";base64," + 
+                          java.util.Base64.getEncoder().encodeToString(bytes);
+            user.setAvatar(base64);
+            return userRepository.save(user);
+        } catch (java.io.IOException e) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+    }
 }

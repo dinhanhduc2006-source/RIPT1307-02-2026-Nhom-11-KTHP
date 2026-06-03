@@ -50,4 +50,14 @@ public class UserController {
         userService.changePassword(id, oldPassword, newPassword);
         return ResponseResult.success("Password changed successfully");
     }
+
+    @PatchMapping("/{id}/profile")
+    public ResponseResult<User> updateProfile(@PathVariable("id") Long id, @RequestBody User user) {
+        return ResponseResult.success(userService.updateProfile(id, user));
+    }
+
+    @PostMapping("/{id}/avatar")
+    public ResponseResult<User> uploadAvatar(@PathVariable("id") Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseResult.success(userService.uploadAvatar(id, file));
+    }
 }

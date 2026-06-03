@@ -29,7 +29,7 @@ const mapEquipmentStatus = (status: string) => {
     case 'Out of Stock':
       return 'Hết hàng';
     case 'Maintenance':
-      return 'Bảo trì';
+      return 'Đang bảo trì';
     default:
       return status;
   }
