@@ -33,13 +33,13 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       const avatarChildren: any[] = [];
       if (!disableAvatarImg) {
         avatarChildren.push(
-          React.createElement(Avatar, {
-            key: 'avatar-img',
-            size: 'small',
-            className: 'umi-plugin-layout-avatar',
-            src: initState?.avatar || 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
-            alt: 'avatar',
-          }),
+            React.createElement(Avatar, {
+              key: 'avatar-img',
+              size: 'small',
+              className: 'umi-plugin-layout-avatar',
+              src: initState?.avatar || 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
+              alt: 'avatar',
+            }),
         );
       }
       avatarChildren.push(React.createElement('span', { key: 'avatar-name', className: nameClassName }, initState?.name));
@@ -80,6 +80,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
 };
 
 export const request = {
+  baseURL: process.env.UMI_APP_API_URL || '',
+
   timeout: 10000,
   errorConfig: {
     errorHandler(error: any) {
@@ -100,4 +102,3 @@ export const request = {
     },
   },
 };
-
