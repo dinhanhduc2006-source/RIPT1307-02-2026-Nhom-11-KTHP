@@ -28,13 +28,14 @@ const PostsTable: React.FC<Props> = ({ posts, onDeletePost }) => {
           {
             title: 'Tags',
             dataIndex: 'tags',
-            render: (_, record) => {
-              const tagList = Array.isArray(record.tags) 
-                ? record.tags 
-                : (typeof record.tags === 'string' ? record.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+            render: (_, record: any) => {
+              const tags = record.tags;
+              const tagList: string[] = Array.isArray(tags) 
+                ? tags 
+                : (typeof tags === 'string' ? tags.split(',').map((t: string) => t.trim()).filter(Boolean) : []);
               return (
                 <Space wrap>
-                  {tagList.map((tag) => (
+                  {tagList.map((tag: string) => (
                     <Tag key={tag}>{tag}</Tag>
                   ))}
                 </Space>

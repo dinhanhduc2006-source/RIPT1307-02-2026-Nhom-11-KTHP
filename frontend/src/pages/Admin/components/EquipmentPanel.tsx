@@ -66,7 +66,6 @@ const EquipmentPanel: React.FC<Props> = ({
     setModalVisible(true);
   };
 
-  // SỬA LỖI 1: Chặn không cho nhập số Sẵn có lớn hơn Tổng
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
@@ -84,7 +83,6 @@ const EquipmentPanel: React.FC<Props> = ({
     }
   };
 
-  // SỬA LỖI 2: Chặn xóa thiết bị nếu đang có người mượn
   const handleDelete = (record: Equipment) => {
     const isBeingBorrowed = requests.some(
       (req) => req.equipment.name === record.name && req.status === 'Approved',

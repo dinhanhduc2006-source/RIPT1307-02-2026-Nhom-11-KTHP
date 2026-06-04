@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer components {
+  .glass-panel {
+    background: rgba(22, 32, 46, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .neon-glow {
+    box-shadow: 0px 10px 30px rgba(0, 229, 195, 0.15);
+  }
+
+  .gradient-text {
+    background: linear-gradient(90deg, #70ffe0 0%, #00dfbe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* --- Custom Scrollbar --- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050f1b;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 223, 190, 0.3);
+  border-radius: 20px;
+  border: 3px solid #050f1b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 223, 190, 0.8);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 223, 190, 0.3) #050f1b;
+}

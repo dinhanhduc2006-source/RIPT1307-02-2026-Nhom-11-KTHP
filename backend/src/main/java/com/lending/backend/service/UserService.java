@@ -15,4 +15,8 @@ public interface UserService {
   void changePassword(Long id, String oldPassword, String newPassword);
 
   List<User> getAll();
+
+  User updateProfile(Long id, User user);
+
+  User uploadAvatar(Long id, org.springframework.web.multipart.MultipartFile file);
 }

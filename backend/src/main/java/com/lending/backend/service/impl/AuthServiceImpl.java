@@ -37,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final RefreshTokenService refreshTokenService;
 
-    @Value("${google.client-id:}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
 
     @Override
