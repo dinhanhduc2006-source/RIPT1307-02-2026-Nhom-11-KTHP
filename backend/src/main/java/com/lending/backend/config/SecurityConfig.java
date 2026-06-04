@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .xssProtection(xss -> xss.disable()) // It's recommended to disable in Spring Security 6+ in favor of CSP, but we can keep default secure headers
             )
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
@@ -64,11 +65,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:8000", "http://127.0.0.1:8000")); // Restrict in production
+        // Cho phép các nguồn phát (Origin) cụ thể
+        configuration.setAllowedOrigins(Arrays.asList(
+            "https://quan-li-muon-do-clb.netlify.app",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Origin", "Accept"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // Cache preflight request trong 1 giờ
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
