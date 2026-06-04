@@ -39,6 +39,7 @@ export type LoanRequest = {
   borrowDate: string;
   returnDate: string;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Returned';
+  rejectReason?: string;
 };
 
 export type Announcement = {

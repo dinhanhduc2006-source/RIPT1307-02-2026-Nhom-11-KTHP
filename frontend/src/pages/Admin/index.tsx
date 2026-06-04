@@ -59,21 +59,46 @@ const AdminPage: React.FC = () => {
   };
 
   const handleApproveRequest = async (id: number) => {
+    const prevRequests = requests;
+    setRequests((current) =>
+      current.map((req) =>
+        req.id === id ? { ...req, status: 'Approved' } : req,
+      ),
+    );
+
+    const messageKey = `approve-${id}`;
+    message.loading({ content: 'Đang gửi yêu cầu duyệt...', key: messageKey });
+
     try {
       await loanRequestApi.approve(id);
-      message.success('Yêu cầu đã được duyệt');
-      fetchData();
+      message.success({
+        content: 'Yêu cầu đã được duyệt',
+        key: messageKey,
+        duration: 3,
+      });
     } catch (error) {
-      message.error('Duyệt yêu cầu thất bại');
+      setRequests(prevRequests);
+      message.error({
+        content: 'Duyệt yêu cầu thất bại',
+        key: messageKey,
+        duration: 3,
+      });
     }
   };
 
   const handleReturnRequest = async (id: number) => {
+    const prevRequests = requests;
+    setRequests((current) =>
+      current.map((req) =>
+        req.id === id ? { ...req, status: 'Returned' } : req,
+      ),
+    );
+
     try {
       await loanRequestApi.returnItem(id);
       message.success('Đã nhận lại thiết bị!');
-      fetchData();
     } catch (error) {
+      setRequests(prevRequests);
       message.error('Trả thiết bị thất bại');
     }
   };
@@ -115,12 +140,30 @@ const AdminPage: React.FC = () => {
   };
 
   const handleRejectRequest = async (id: number, reason: string) => {
+    const prevRequests = requests;
+    setRequests((current) =>
+      current.map((req) =>
+        req.id === id ? { ...req, status: 'Rejected', rejectReason: reason } : req,
+      ),
+    );
+
+    const messageKey = `reject-${id}`;
+    message.loading({ content: 'Đang gửi yêu cầu từ chối...', key: messageKey });
+
     try {
       await loanRequestApi.reject(id, reason);
-      message.warning(`Từ chối: ${reason}`);
-      fetchData();
+      message.warning({
+        content: `Từ chối: ${reason}`,
+        key: messageKey,
+        duration: 3,
+      });
     } catch (error) {
-      message.error('Từ chối yêu cầu thất bại');
+      setRequests(prevRequests);
+      message.error({
+        content: 'Từ chối yêu cầu thất bại',
+        key: messageKey,
+        duration: 3,
+      });
     }
   };
 

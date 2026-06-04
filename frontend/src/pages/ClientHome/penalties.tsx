@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Tag, Button, Empty, Spin, message } from 'antd';
+import { Table, Tag, Button, Empty, Spin, message, Modal } from 'antd';
 import { penaltyApi } from '@/services/api';
 import { CheckOutlined } from '@ant-design/icons';
 
@@ -8,6 +8,9 @@ const normalizeStatus = (status: string | undefined) => status?.toString().trim(
 const ClientPenalties: React.FC = () => {
   const [penalties, setPenalties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPenalty, setSelectedPenalty] = useState<any | null>(null);
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   useEffect(() => {
     const fetchPenalties = async () => {
@@ -26,15 +29,31 @@ const ClientPenalties: React.FC = () => {
     fetchPenalties();
   }, []);
 
-  const handlePayPenalty = async (penaltyId: number) => {
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet'>('card');
+
+  const openPaymentModal = (record: any) => {
+    setSelectedPenalty(record);
+    setPaymentMethod('card');
+    setIsPaymentModalVisible(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedPenalty) {
+      return;
+    }
     try {
-      await penaltyApi.pay(penaltyId);
-      message.success('Thanh toán thành công!');
-      setPenalties(penalties.map(p => 
-        p.id === penaltyId ? { ...p, status: 'Paid' } : p
+      setConfirmingPayment(true);
+      await penaltyApi.pay(selectedPenalty.id);
+      message.success('Thanh toán thành công! Trạng thái đã được cập nhật.');
+      setPenalties(penalties.map(p =>
+        p.id === selectedPenalty.id ? { ...p, status: 'Paid' } : p
       ));
+      setIsPaymentModalVisible(false);
+      setSelectedPenalty(null);
     } catch (error: any) {
       message.error(error?.message || 'Thanh toán thất bại!');
+    } finally {
+      setConfirmingPayment(false);
     }
   };
 
@@ -65,11 +84,13 @@ const ClientPenalties: React.FC = () => {
       key: 'status',
       render: (status: string) => {
         const normalized = normalizeStatus(status);
-        return (
-          <Tag color={normalized === 'paid' ? 'green' : 'red'}>
-            {normalized === 'paid' ? '✓ Đã nộp' : '⏳ Chưa nộp'}
-          </Tag>
-        );
+        if (normalized === 'paid') {
+          return <Tag color="green">✓ Đã nộp</Tag>;
+        }
+        if (normalized === 'pendingapproval') {
+          return <Tag color="gold">⏳ Chờ admin xác nhận</Tag>;
+        }
+        return <Tag color="red">⏳ Chưa nộp</Tag>;
       },
     },
     {
@@ -81,20 +102,25 @@ const ClientPenalties: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_: any, record: any) => (
-        normalizeStatus(record.status) === 'unpaid' ? (
-          <Button 
-            type="primary" 
-            danger 
-            size="small"
-            onClick={() => handlePayPenalty(record.id)}
-          >
-            💳 Thanh toán
-          </Button>
-        ) : (
-          <Tag icon={<CheckOutlined />} color="success">Đã thanh toán</Tag>
-        )
-      ),
+      render: (_: any, record: any) => {
+        const normalized = normalizeStatus(record.status);
+        if (normalized === 'unpaid') {
+          return (
+            <Button
+              type="primary"
+              danger
+              size="small"
+              onClick={() => openPaymentModal(record)}
+            >
+              💳 Thanh toán
+            </Button>
+          );
+        }
+        if (normalized === 'pendingapproval') {
+          return <Tag color="orange">Đang chờ xác nhận</Tag>;
+        }
+        return <Tag icon={<CheckOutlined />} color="success">Đã thanh toán</Tag>;
+      },
     },
   ];
 
@@ -142,6 +168,54 @@ const ClientPenalties: React.FC = () => {
         pagination={{ pageSize: 10 }}
         style={{ marginTop: '24px' }}
       />
+
+      <Modal
+        title="Thanh toán phạt "
+        open={isPaymentModalVisible}
+        onCancel={() => {
+          setIsPaymentModalVisible(false);
+          setSelectedPenalty(null);
+        }}
+        onOk={handleConfirmPayment}
+        okText="Xác nhận thanh toán"
+        confirmLoading={confirmingPayment}
+        cancelText="Hủy"
+      >
+        {selectedPenalty ? (
+          <div>
+            <p style={{ marginBottom: 12 }}>
+              Số tiền nợ: <strong>{selectedPenalty.amount?.toLocaleString()} đ</strong>
+            </p>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 8, fontWeight: 600 }}>Phương thức thanh toán</div>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Button
+                  type={paymentMethod === 'card' ? 'primary' : 'default'}
+                  onClick={() => setPaymentMethod('card')}
+                >
+                  Thanh toán Thẻ ngân hàng 
+                </Button>
+                <Button
+                  type={paymentMethod === 'wallet' ? 'primary' : 'default'}
+                  onClick={() => setPaymentMethod('wallet')}
+                >
+                  Thanh toán Ví điện tử 
+                </Button>
+              </div>
+            </div>
+            <div style={{ marginBottom: 16, fontSize: 12, color: '#888' }}>
+              (Chế độ Sandbox: Bấm Xác nhận để hệ thống tự động xử lý giao dịch thành công)
+            </div>
+            <div style={{ padding: 16, border: '1px solid #f0f0f0', borderRadius: 8, background: '#fafafa' }}>
+              <div style={{ marginBottom: 8, fontWeight: 600 }}>Thông tin đơn thanh toán</div>
+              <div>Số tiền: {selectedPenalty.amount?.toLocaleString()} đ</div>
+              <div>Mã phạt: #{selectedPenalty.id}</div>
+              <div>Người dùng: {selectedPenalty.user?.username || '---'}</div>
+              <div>Phương thức: {paymentMethod === 'card' ? 'Thẻ ngân hàng' : 'Ví điện tử'}</div>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 };

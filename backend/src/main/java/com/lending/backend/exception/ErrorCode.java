@@ -14,6 +14,7 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND(1009, "Resource not found", HttpStatus.NOT_FOUND),
     INSUFFICIENT_STOCK(1010, "Insufficient equipment stock", HttpStatus.BAD_REQUEST),
     INVALID_BORROW_DATE(1011, "Borrow date must be before return date", HttpStatus.BAD_REQUEST),
+    EXCEED_MAX_BORROW_DAYS(1014, "Borrow duration exceeds the maximum allowed period", HttpStatus.BAD_REQUEST),
     USER_HAS_DEBT(1012, "User has unpaid penalties", HttpStatus.BAD_REQUEST),
     USER_HAS_OVERDUE(1013, "User has active overdue loan requests", HttpStatus.BAD_REQUEST),
     ;

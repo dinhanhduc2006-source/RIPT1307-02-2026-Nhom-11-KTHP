@@ -81,7 +81,7 @@ export const equipmentApi = {
 
 export const loanRequestApi = {
   create: (data: { equipmentId: number; borrowDate: string; returnDate: string }) =>
-    authRequest(`${API_BASE}/loan-requests`, { method: 'POST', data }),
+    authRequest(`${API_BASE}/loan-requests`, { method: 'POST', data, skipErrorHandler: true }),
   approve: (id: number) =>
     authRequest(`${API_BASE}/loan-requests/${id}/approve`, {
       method: 'PATCH',
@@ -121,7 +121,8 @@ export const penaltyApi = {
   getAll: () => authRequest(`${API_BASE}/penalties`),
   create: (data: { userId: number; reason: string; amount: number; loanRequestId?: number }) =>
     authRequest(`${API_BASE}/penalties`, { method: 'POST', data }),
-  pay: (id: number) => authRequest(`${API_BASE}/penalties/${id}/pay`, { method: 'PATCH' }),
+  confirmTransfer: (id: number) => authRequest(`${API_BASE}/penalties/${id}/confirm-transfer`, { method: 'PATCH' }),
+  pay: (id: number) => authRequest(`${API_BASE}/penalties/${id}/pay`, { method: 'POST' }),
 };
 
 export const maintenanceApi = {

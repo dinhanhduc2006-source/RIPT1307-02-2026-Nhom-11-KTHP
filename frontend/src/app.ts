@@ -36,9 +36,18 @@ export const request = {
       const { response } = error;
       if (response && response.status) {
         const { status, statusText } = response;
+        const mappedMessages: Record<number, string> = {
+          1011: 'Thời gian mượn không hợp lệ. Vui lòng chọn lại ngày mượn và trả.',
+          1014: 'Thời gian mượn vượt quá số ngày quy định. Vui lòng chọn lại.',
+          1007: 'Bạn không có quyền thanh toán khoản phạt này.',
+        };
+        const responseCode = response.data?.code;
+        if (responseCode === 1011 || responseCode === 1014) {
+          throw error;
+        }
+        const errorMessage = mappedMessages[responseCode] || response.data?.message || statusText || `Request Error ${status}`;
         notification.error({
-          message: `Request Error ${status}`,
-          description: response.data?.message || statusText || 'An unexpected error occurred.',
+          message: errorMessage,
         });
       } else if (!response) {
         notification.error({

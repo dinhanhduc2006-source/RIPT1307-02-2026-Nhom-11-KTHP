@@ -49,6 +49,18 @@ const EquipmentList: React.FC = () => {
     setSelectedItem(null);
   };
 
+  const getLoanRequestErrorMessage = (error: any) => {
+    const response = error?.response;
+    const code = response?.data?.code;
+    const messageText = response?.data?.message;
+
+    if (code === 1011 || code === 1014) {
+      return 'Thời gian mượn vượt quá số ngày quy định. Vui lòng chọn lại.';
+    }
+
+    return messageText || error?.message || 'Gửi yêu cầu thất bại. Vui lòng thử lại.';
+  };
+
   const handleSubmitRequest = async (values: { dates: [Dayjs, Dayjs] }) => {
     if (!selectedItem) {
       message.error('Vui lòng chọn thiết bị trước khi gửi yêu cầu.');
@@ -56,6 +68,16 @@ const EquipmentList: React.FC = () => {
     }
 
     const [startDate, endDate] = values.dates;
+
+    if (!startDate || !endDate) {
+      message.error('Vui lòng chọn đầy đủ ngày mượn và ngày trả.');
+      return;
+    }
+
+    if (endDate.isBefore(startDate, 'day')) {
+      message.error('Ngày trả phải sau hoặc bằng ngày mượn. Vui lòng chọn lại.');
+      return;
+    }
 
     try {
       await loanRequestApi.create({
@@ -69,15 +91,14 @@ const EquipmentList: React.FC = () => {
       fetchEquipment();
     } catch (error: any) {
       console.error(error);
-      const errorMessage = error?.message || 'Gửi yêu cầu thất bại. Vui lòng thử lại.';
-      message.error(errorMessage);
+      message.error(getLoanRequestErrorMessage(error));
     }
   };
 
   const renderStatus = (status: string) => {
     if (status === 'Available') return <Badge status="success" text="Sẵn sàng mượn" />;
     if (status === 'Maintenance') return <Badge status="warning" text="Đang bảo trì" />;
-    return <Badge status="error" text="Hết đồ" />;
+    return <Badge status="error" text="Đã hết đồ" />;
   };
 
   const columns = [
@@ -124,7 +145,21 @@ const EquipmentList: React.FC = () => {
           <Form.Item
             name="dates"
             label="Chọn thời gian mượn - trả"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày mượn và ngày trả!' }]}
+            rules={[
+              { required: true, message: 'Vui lòng chọn ngày mượn và ngày trả!' },
+              () => ({
+                validator(_, value) {
+                  if (!value || value.length !== 2) {
+                    return Promise.reject(new Error('Vui lòng chọn ngày mượn và ngày trả.'));
+                  }
+                  const [startDate, endDate] = value as [Dayjs, Dayjs];
+                  if (endDate.isBefore(startDate, 'day')) {
+                    return Promise.reject(new Error('Ngày trả phải sau hoặc bằng ngày mượn.'));
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
           >
             <RangePicker
               style={{ width: '100%' }}

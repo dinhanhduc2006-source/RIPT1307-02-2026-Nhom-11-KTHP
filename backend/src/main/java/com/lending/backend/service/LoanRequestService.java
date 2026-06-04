@@ -1,7 +1,7 @@
 package com.lending.backend.service;
 
 import com.lending.backend.entity.LoanRequest;
-import com.lending.backend.enums.LoanRequestStatus;
+
 import java.time.LocalDate;
 import java.util.List;
 

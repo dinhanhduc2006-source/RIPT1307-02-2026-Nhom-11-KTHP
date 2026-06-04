@@ -79,6 +79,7 @@ export default defineConfig({
       path: '/forum',
       component: './Forum',
       wrappers: ['@/wrappers/AuthWrapper'],
+      layout: false,
     },
     {
       name: 'Quản lý thông báo',

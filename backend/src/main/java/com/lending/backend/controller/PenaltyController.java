@@ -6,6 +6,7 @@ import com.lending.backend.entity.User;
 import com.lending.backend.service.PenaltyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,10 +30,16 @@ public class PenaltyController {
         return ResponseResult.success(penaltyService.getAll());
     }
 
-    @PatchMapping("/{id}/pay")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/confirm-transfer")
+    public ResponseResult<Penalty> confirmTransfer(@PathVariable("id") Long id) {
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(penaltyService.confirmTransfer(id, currentUser));
+    }
+
+    @RequestMapping(value = "/{id}/pay", method = {RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseResult<Penalty> pay(@PathVariable("id") Long id) {
-        return ResponseResult.success(penaltyService.payPenalty(id));
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseResult.success(penaltyService.payPenalty(id, currentUser));
     }
 
     @PostMapping

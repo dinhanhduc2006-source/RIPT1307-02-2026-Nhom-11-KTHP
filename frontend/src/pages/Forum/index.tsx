@@ -17,6 +17,7 @@ import {
   Typography,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { history } from '@umijs/max';
 import { postApi, getUser } from '@/services/api';
 
 const { Paragraph, Title } = Typography;
@@ -26,6 +27,10 @@ const ForumPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const currentUser = getUser();
+  const currentUserLabel =
+    currentUser?.fullName || currentUser?.name || currentUser?.username || 'Sinh viên';
+  const currentUserRole = currentUser?.role || 'Sinh viên';
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -73,19 +78,41 @@ const ForumPage: React.FC = () => {
   };
 
   return (
-    <PageContainer
-      title="Bảng tin & Thảo luận cộng đồng"
-      subTitle="Nơi chia sẻ thông tin, đề xuất và trao đổi về các thiết bị"
-    >
-      <ProCard bordered style={{ minHeight: '60vh' }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
-          style={{ marginBottom: 16 }}
-        >
-          Tạo bài thảo luận mới
-        </Button>
+    <div style={{ minHeight: '100vh', background: '#f5f7fa', padding: 24 }}>
+      <PageContainer
+        title="Bảng tin & Thảo luận cộng đồng"
+        subTitle="Nơi chia sẻ thông tin, đề xuất và trao đổi về các thiết bị"
+        extra={[
+          <Button key="back" type="default" onClick={() => history.push('/client-home')}>
+            Quay về trang sinh viên
+          </Button>,
+        ]}
+      >
+        <ProCard bordered style={{ marginBottom: 24, borderRadius: 12, padding: 16 }}>
+          <Space align="center">
+            <Avatar
+              size="large"
+              icon={<UserOutlined />}
+              src={currentUser?.avatarUrl}
+            />
+            <div>
+              <Typography.Title level={5} style={{ margin: 0 }}>
+                {currentUserLabel}
+              </Typography.Title>
+              <div style={{ color: '#8c8c8c', fontSize: 14 }}>{currentUserRole}</div>
+            </div>
+          </Space>
+        </ProCard>
+
+        <ProCard bordered style={{ minHeight: '60vh' }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalOpen(true)}
+            style={{ marginBottom: 16 }}
+          >
+            Tạo bài thảo luận mới
+          </Button>
         <ProList<any>
           loading={loading}
           itemLayout="vertical"
@@ -116,7 +143,7 @@ const ForumPage: React.FC = () => {
                 <Space>
                   <Avatar icon={<UserOutlined />} size="small" />
                   <span style={{ fontWeight: 'bold', color: '#595959' }}>
-                    {item.author?.username || 'N/A'}
+                    {item.author?.fullName || item.author?.username || currentUserLabel || 'N/A'}
                   </span>
                   <span>| {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : '-'}</span>
                 </Space>
@@ -194,6 +221,7 @@ const ForumPage: React.FC = () => {
         </Form>
       </Modal>
     </PageContainer>
+  </div>
   );
 };
 
