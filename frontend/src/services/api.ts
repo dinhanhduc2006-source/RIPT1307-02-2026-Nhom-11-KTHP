@@ -64,6 +64,13 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       data: refreshToken,
     }),
+
+  googleLogin: (credential: string) =>
+    publicRequest(`${API_BASE}/auth/google-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: credential,
+    }),
 };
 
 export const equipmentApi = {

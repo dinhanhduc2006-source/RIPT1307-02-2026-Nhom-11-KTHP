@@ -58,3 +58,7 @@ Thumbs.db
 
 # Project Specific
 REQUIREMENTS.md
+
+dist/
+node_modules/
+.umi/

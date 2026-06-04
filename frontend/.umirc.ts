@@ -10,8 +10,11 @@ export default defineConfig({
   },
 
   define: {
-    'process.env.API_URL': '"https://ript1307-02-2026-nhom-11-kthp-production.up.railway.app/api/v1"'
+    'process.env.API_URL': '"https://ript1307-02-2026-nhom-11-kthp-production.up.railway.app/api/v1"',
+    'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
   },
+
+  esbuildMinifyIIFE: true,
 
   antd: {},
   access: {},

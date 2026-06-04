@@ -2,6 +2,7 @@ import { history } from '@umijs/max';
 import React, { useEffect, useState, useRef } from 'react';
 import { isAuthenticated, getUser } from '@/services/api';
 import { motion } from 'framer-motion';
+import '@/global.css';
 
 // --- Animated Spotlight Card Component ---
 const SpotlightCard = ({ children, className = '', variants }: any) => {

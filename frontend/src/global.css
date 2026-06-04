@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer components {
   .glass-panel {
@@ -27,22 +26,22 @@ html {
 
 /* --- Custom Scrollbar --- */
 ::-webkit-scrollbar {
-  width: 10px; /* Slightly wider for better usability */
+  width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #050f1b; /* Matches surface-container-lowest for a seamless look */
+  background: #050f1b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 223, 190, 0.3); /* Using primary color with low opacity */
+  background-color: rgba(0, 223, 190, 0.3);
   border-radius: 20px;
-  border: 3px solid #050f1b; /* Creates a floating effect */
+  border: 3px solid #050f1b;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 223, 190, 0.8); /* Brighter on hover */
+  background-color: rgba(0, 223, 190, 0.8);
 }
 
 /* Firefox Support */
