@@ -21,7 +21,6 @@
 }
 
 html {
-  scroll-behavior: smooth;
 }
 
 /* --- Custom Scrollbar --- */
@@ -48,4 +47,10 @@ html {
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 223, 190, 0.3) #050f1b;
+}
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
