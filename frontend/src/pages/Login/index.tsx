@@ -103,7 +103,8 @@ const LoginContent: React.FC = () => {
                       size="large"
                       locale="vi"
                       text="continue_with"
-                      width="100%"
+                      width={350}
+                      uxMode="redirect"
                     />
                   </div>
                 </div>
