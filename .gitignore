@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/target/
+target/
+
+# Local env files
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+/dist
+/build
+/out
+/.mfsu
+.swc
+.turbopack
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Umi/Next/React specific
+/.umi/
+/.umi-production/
+/.umi-test/
+/frontend/src/.umi/
+/frontend/src/.umi-production/
+/frontend/src/.umi-test/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project Specific
+REQUIREMENTS.md
+
+dist/
+node_modules/
+.umi/

@@ -1,0 +1,19 @@
+package com.lending.backend.repository;
+
+import com.lending.backend.entity.AuditLog;
+import com.lending.backend.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+    @Override
+    @EntityGraph(attributePaths = {"user"})
+    List<AuditLog> findAll();
+
+    List<AuditLog> findByUser(User user);
+    List<AuditLog> findByAction(String action);
+}
