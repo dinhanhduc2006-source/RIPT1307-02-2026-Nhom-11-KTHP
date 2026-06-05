@@ -31,7 +31,7 @@ export default defineConfig({
   },
 
   layout: {
-    title: 'CLB Thiết Bị',
+    title: 'PTIT Club admin',
     locale: false,
   },
 
