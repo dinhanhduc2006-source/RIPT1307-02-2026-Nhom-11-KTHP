@@ -7,7 +7,7 @@ import { authApi, setAuth } from '@/services/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 // Use Google Client ID from environment variables
-const GOOGLE_CLIENT_ID = "991384804687 ivrmsjck0l85bskg14brul7cv113vqpf.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "991384804687-ivrmsjck0l85bskg14brul7cv113vqpf.apps.googleusercontent.com";
 const LoginContent: React.FC = () => {
   const { refresh } = useModel('@@initialState');
   const [loaded, setLoaded] = useState(false);
