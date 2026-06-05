@@ -7,7 +7,7 @@ import { authApi, setAuth } from '@/services/api';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 // Use Google Client ID from environment variables
-const GOOGLE_CLIENT_ID = "593358070928-4t0gfkm1jhn9ukhnp8vnmcdnj9d1a494.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "991384804687 ivrmsjck0l85bskg14brul7cv113vqpf.apps.googleusercontent.com";
 const LoginContent: React.FC = () => {
   const { refresh } = useModel('@@initialState');
   const [loaded, setLoaded] = useState(false);
@@ -87,7 +87,7 @@ const LoginContent: React.FC = () => {
                     size="large"
                     block
                     onClick={() => _.form?.submit()}
-                    className="h-14 rounded-xl bg-gradient-to-r from-[#70ffe0] to-[#00dfbe] border-none text-[#00201a] font-bold text-lg hover:scale-[1.02] transition-transform shadow-[0_4px_20px_rgba(0,223,190,0.3)]"
+                    className="h-14 rounded-xl bg-gradient-to-r from-[#00e5c3] to-[#00c2a3] border-none text-[#00201a] font-bold text-lg hover:scale-[1.02] transition-transform shadow-[0_4px_20px_rgba(0,223,190,0.3)]"
                   >
                     Đăng nhập
                   </Button>

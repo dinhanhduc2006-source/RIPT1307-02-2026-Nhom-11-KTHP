@@ -101,7 +101,7 @@ const SignUpPage: React.FC = () => {
                       size="large" 
                       block 
                       onClick={() => _.form?.submit()} 
-                      className="h-14 rounded-xl bg-gradient-to-r from-[#70ffe0] to-[#00dfbe] border-none text-[#00201a] font-bold text-lg hover:scale-[1.02] transition-transform shadow-[0_4px_20px_rgba(0,223,190,0.3)]"
+                      className="h-14 rounded-xl bg-gradient-to-r from-[#00e5c3] to-[#00c2a3] border-none text-[#00201a] font-bold text-lg hover:scale-[1.02] transition-transform shadow-[0_4px_20px_rgba(0,223,190,0.3)]"
                     >
                       Đăng ký tài khoản
                     </Button>
